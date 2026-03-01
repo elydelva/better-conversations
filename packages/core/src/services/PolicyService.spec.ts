@@ -1,23 +1,49 @@
 import { describe, expect, test } from "bun:test";
-import { PolicyNotImplementedError } from "@better-conversation/errors";
+import type { PolicyAdapter } from "../adapter/index.js";
 import { PolicyService } from "./PolicyService.js";
 
-describe("PolicyService", () => {
-  const service = new PolicyService();
+function createMockPolicyAdapter(overrides?: Partial<PolicyAdapter>): PolicyAdapter {
+  return {
+    find: async () => null,
+    upsert: async () => {},
+    delete: async () => {},
+    ...overrides,
+  };
+}
 
-  test("setGlobal throws PolicyNotImplementedError", async () => {
-    await expect(service.setGlobal({ allowedBlocks: ["text"] })).rejects.toThrow(
-      PolicyNotImplementedError
-    );
+describe("PolicyService", () => {
+  test("setGlobal delegates to adapter.upsert", async () => {
+    const upsertCalls: Array<{ level: string; scopeId: string; policy: unknown }> = [];
+    const adapter = createMockPolicyAdapter({
+      upsert: async (level, scopeId, policy) => {
+        upsertCalls.push({ level, scopeId, policy });
+      },
+    });
+    const service = new PolicyService({ adapter });
+    await service.setGlobal({ allowedBlocks: ["text", "media"] });
+    expect(upsertCalls).toHaveLength(1);
+    expect(upsertCalls[0]).toEqual({
+      level: "global",
+      scopeId: "global",
+      policy: { allowedBlocks: ["text", "media"] },
+    });
   });
 
-  test("setRole throws PolicyNotImplementedError", async () => {
-    await expect(service.setRole("member", { allowedBlocks: ["text"] })).rejects.toThrow(
-      PolicyNotImplementedError
-    );
+  test("setRole delegates to adapter.upsert", async () => {
+    const upsertCalls: Array<{ level: string; scopeId: string }> = [];
+    const adapter = createMockPolicyAdapter({
+      upsert: async (level, scopeId) => {
+        upsertCalls.push({ level, scopeId });
+      },
+    });
+    const service = new PolicyService({ adapter });
+    await service.setRole("member", { allowedBlocks: ["text"] });
+    expect(upsertCalls[0]).toEqual({ level: "role", scopeId: "member" });
   });
 
   test("resolve returns default policy", async () => {
+    const adapter = createMockPolicyAdapter();
+    const service = new PolicyService({ adapter });
     const result = await service.resolve("chatter_1");
     expect(result).toBeDefined();
     expect(result.canJoinSelf).toBe(false);

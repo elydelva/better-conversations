@@ -1,5 +1,6 @@
 import {
   createAdapterHelpers,
+  createUnsupportedPolicyAdapter,
   createUnsupportedRegistriesAdapter,
 } from "@better-conversation/core";
 import type { DatabaseAdapter } from "@better-conversation/core";
@@ -30,5 +31,6 @@ export function prismaAdapter(_client?: unknown, options?: PrismaAdapterOptions)
     blocks: createBlocksAdapter(ctx),
     permissions: createPermissionsAdapter(ctx),
     registries: createUnsupportedRegistriesAdapter(),
+    policies: createUnsupportedPolicyAdapter(),
   };
 }

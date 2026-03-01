@@ -48,7 +48,7 @@ export class ConversationEngine<
       generateId,
     });
     this.permissions = new PermissionService(adapter.permissions);
-    this.policies = new PolicyService();
+    this.policies = new PolicyService({ adapter: adapter.policies });
   }
 
   async init(): Promise<void> {

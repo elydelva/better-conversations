@@ -3,6 +3,7 @@ import type { ChatterAdapter } from "./ChatterAdapter.interface.js";
 import type { ConversationAdapter } from "./ConversationAdapter.interface.js";
 import type { ParticipantAdapter } from "./ParticipantAdapter.interface.js";
 import type { PermissionAdapter } from "./PermissionAdapter.interface.js";
+import type { PolicyAdapter } from "./PolicyAdapter.interface.js";
 import type { RegistryAdapter } from "./RegistryAdapter.interface.js";
 
 export interface DatabaseAdapter {
@@ -12,4 +13,5 @@ export interface DatabaseAdapter {
   blocks: BlockAdapter;
   permissions: PermissionAdapter;
   registries: RegistryAdapter;
+  policies: PolicyAdapter;
 }

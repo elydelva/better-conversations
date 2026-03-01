@@ -1,13 +1,21 @@
-import { PolicyNotImplementedError } from "@better-conversation/errors";
+import type { PolicyAdapter } from "../adapter/index.js";
 import type { PolicyObject, ResolvedPolicy } from "../policy/index.js";
 
+const GLOBAL_SCOPE_ID = "global";
+
+export interface PolicyServiceConfig {
+  adapter: PolicyAdapter;
+}
+
 export class PolicyService {
+  constructor(private readonly config: PolicyServiceConfig) {}
+
   async resolve(
     _chatterId: string,
     _conversationId?: string,
     _threadParentBlockId?: string
   ): Promise<ResolvedPolicy> {
-    // Stub: returns default policy. Merge engine to be implemented later.
+    // Stub: returns default policy. Merge engine to be implemented in feat/merge-engine.
     return {
       canJoinSelf: false,
       readOnly: false,
@@ -26,23 +34,23 @@ export class PolicyService {
     };
   }
 
-  async setGlobal(_policy: Partial<PolicyObject>): Promise<void> {
-    throw new PolicyNotImplementedError("setGlobal");
+  async setGlobal(policy: Partial<PolicyObject>): Promise<void> {
+    await this.config.adapter.upsert("global", GLOBAL_SCOPE_ID, policy as PolicyObject);
   }
 
-  async setRole(_role: string, _policy: Partial<PolicyObject>): Promise<void> {
-    throw new PolicyNotImplementedError("setRole");
+  async setRole(role: string, policy: Partial<PolicyObject>): Promise<void> {
+    await this.config.adapter.upsert("role", role, policy as PolicyObject);
   }
 
-  async setChatter(_chatterId: string, _policy: Partial<PolicyObject>): Promise<void> {
-    throw new PolicyNotImplementedError("setChatter");
+  async setChatter(chatterId: string, policy: Partial<PolicyObject>): Promise<void> {
+    await this.config.adapter.upsert("chatter", chatterId, policy as PolicyObject);
   }
 
-  async setConversation(_conversationId: string, _policy: Partial<PolicyObject>): Promise<void> {
-    throw new PolicyNotImplementedError("setConversation");
+  async setConversation(conversationId: string, policy: Partial<PolicyObject>): Promise<void> {
+    await this.config.adapter.upsert("conversation", conversationId, policy as PolicyObject);
   }
 
-  async setThread(_threadParentBlockId: string, _policy: Partial<PolicyObject>): Promise<void> {
-    throw new PolicyNotImplementedError("setThread");
+  async setThread(threadParentBlockId: string, policy: Partial<PolicyObject>): Promise<void> {
+    await this.config.adapter.upsert("thread", threadParentBlockId, policy as PolicyObject);
   }
 }

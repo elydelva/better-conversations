@@ -1,4 +1,5 @@
 export { createAdapterHelpers } from "./helpers.js";
+export { createUnsupportedPolicyAdapter } from "./unsupportedPolicies.js";
 export { createUnsupportedRegistriesAdapter } from "./unsupportedRegistries.js";
 export type { AdapterOptions } from "./helpers.js";
 export type { ChatterAdapter } from "./ChatterAdapter.interface.js";
@@ -6,5 +7,6 @@ export type { ConversationAdapter } from "./ConversationAdapter.interface.js";
 export type { ParticipantAdapter } from "./ParticipantAdapter.interface.js";
 export type { BlockAdapter } from "./BlockAdapter.interface.js";
 export type { PermissionAdapter } from "./PermissionAdapter.interface.js";
+export type { PolicyAdapter, PolicyLevel, StoredPolicy } from "./PolicyAdapter.interface.js";
 export type { RegistryAdapter } from "./RegistryAdapter.interface.js";
 export type { DatabaseAdapter } from "./DatabaseAdapter.interface.js";
