@@ -1,0 +1,130 @@
+// better-conversation Prisma schema
+// Merge these models into your schema.prisma (append after your datasource and generator).
+// Requires PostgreSQL. Run: prisma generate && prisma db push (or migrate)
+
+model BcChatter {
+  id          String   @id @map("id")
+  displayName String   @map("display_name")
+  avatarUrl   String?  @map("avatar_url")
+  entityType  String   @map("entity_type")
+  entityId   String?  @map("entity_id")
+  metadata   Json?    @map("metadata")
+  isActive   Boolean  @default(true) @map("is_active")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@map("bc_chatters")
+}
+
+enum BcConversationStatus {
+  open
+  archived
+  locked
+
+  @@map("bc_conversation_status")
+}
+
+model BcConversation {
+  id        String              @id @map("id")
+  title     String?             @map("title")
+  status    BcConversationStatus @default(open) @map("status")
+  entityType String?            @map("entity_type")
+  entityId  String?             @map("entity_id")
+  createdBy String              @map("created_by")
+  metadata  Json?               @map("metadata")
+  createdAt DateTime           @default(now()) @map("created_at")
+  updatedAt DateTime           @updatedAt @map("updated_at")
+
+  @@map("bc_conversations")
+}
+
+model BcParticipant {
+  id             String    @id @map("id")
+  conversationId String    @map("conversation_id")
+  chatterId      String    @map("chatter_id")
+  role           String    @map("role")
+  joinedAt       DateTime  @default(now()) @map("joined_at")
+  leftAt         DateTime? @map("left_at")
+  lastReadAt     DateTime? @map("last_read_at")
+  metadata       Json?     @map("metadata")
+
+  @@unique([conversationId, chatterId])
+  @@map("bc_participants")
+}
+
+enum BcBlockStatus {
+  published
+  pending_review
+  refused
+  deleted
+
+  @@map("bc_block_status")
+}
+
+model BcBlock {
+  id             String        @id @map("id")
+  conversationId String        @map("conversation_id")
+  authorId       String        @map("author_id")
+  type           String        @map("type")
+  body           String?       @map("body")
+  metadata       Json?         @map("metadata")
+  threadParentId String?       @map("thread_parent_id")
+  status         BcBlockStatus @default(published) @map("status")
+  refusalReason  String?       @map("refusal_reason")
+  flaggedAt      DateTime?    @map("flagged_at")
+  editedAt       DateTime?     @map("edited_at")
+  createdAt      DateTime      @default(now()) @map("created_at")
+
+  @@map("bc_blocks")
+}
+
+model BcChatterPermission {
+  id        String  @id @map("id")
+  chatterId String  @map("chatter_id")
+  action    String  @map("action")
+  scope     String? @map("scope")
+  granted   Boolean @default(true) @map("granted")
+
+  @@map("bc_chatter_permissions")
+}
+
+model BcBlockRegistry {
+  type         String   @id @map("type")
+  schemaJson   Json     @map("schema_json")
+  isBuiltIn    Boolean  @default(false) @map("is_built_in")
+  registeredAt DateTime @default(now()) @map("registered_at")
+
+  @@map("bc_block_registry")
+}
+
+model BcRoleRegistry {
+  name         String   @id @map("name")
+  extends      String?  @map("extends")
+  policy       Json     @map("policy")
+  isBuiltIn    Boolean  @default(false) @map("is_built_in")
+  registeredAt DateTime @default(now()) @map("registered_at")
+
+  @@map("bc_role_registry")
+}
+
+enum BcPolicyLevel {
+  global
+  role
+  chatter
+  conversation
+  thread
+
+  @@map("bc_policy_level")
+}
+
+model BcPolicy {
+  id        String       @id @map("id")
+  level     BcPolicyLevel @map("level")
+  scopeId   String       @map("scope_id")
+  policy    Json         @map("policy")
+  createdAt DateTime     @default(now()) @map("created_at")
+  updatedAt DateTime     @updatedAt @map("updated_at")
+
+  @@unique([level, scopeId])
+  @@map("bc_policies")
+}
