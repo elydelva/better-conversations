@@ -10,7 +10,7 @@ From `packages/benchmarks`:
 # Run benchmarks (migrates schema if needed, then runs)
 bun run bench
 
-# Run stress tests (50 runs × 6 tests, concurrent, in-memory DB)
+# Run stress tests (measures max ops/sec per operation)
 bun run stress
 
 # Apply schema via drizzle-kit (optional; migrate runs automatically for bench)
@@ -54,4 +54,4 @@ cd packages/benchmarks && bun run stress
 
 ## Stress Tests
 
-Uses `bun test --rerun-each 50 --concurrent --max-concurrency 20` to run each test 50 times concurrently, exercising chatters, conversations, participants, blocks, policies, and permissions under load.
+Measures maximum operations per second for each component (chatters, conversations, participants, blocks, policies, permissions). Each test runs for 2 seconds and reports throughput (ops/sec).

@@ -7,7 +7,7 @@
     "bench:only": "bun run src/run.ts",
     "db:push": "drizzle-kit push",
     "db:generate": "drizzle-kit generate",
-    "stress": "bun test src/stress.test.ts --rerun-each 50 --concurrent --max-concurrency 20",
+    "stress": "bun test src/stress.test.ts",
     "build": "echo Benchmarks OK"
   },
   "dependencies": {

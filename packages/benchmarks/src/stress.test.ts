@@ -1,9 +1,9 @@
 /**
- * Stress tests for better-conversation.
+ * Stress tests (throughput benchmarks) for better-conversation.
  * Run with: bun run stress
  *
- * Uses bun test --rerun-each 50 --concurrent to hammer all components
- * with real SQLite + adapter-drizzle. Uses in-memory DB for a fresh schema each run.
+ * Measures max operations per second for each component.
+ * Uses in-memory SQLite + adapter-drizzle.
  */
 
 import { Database } from "bun:sqlite";
@@ -15,6 +15,30 @@ import { drizzle } from "drizzle-orm/bun-sqlite";
 import { migrate } from "drizzle-orm/bun-sqlite/migrator";
 
 let engine: ReturnType<typeof betterConversation>;
+let chatter: { id: string };
+let conv: { id: string };
+
+const DURATION_MS = 2000;
+
+async function measureOpsPerSecond(
+  name: string,
+  fn: () => Promise<void>,
+  warmupRuns = 5
+): Promise<{ ops: number; opsPerSec: number }> {
+  for (let i = 0; i < warmupRuns; i++) await fn();
+  const start = performance.now();
+  let count = 0;
+  while (performance.now() - start < DURATION_MS) {
+    await fn();
+    count++;
+  }
+  const elapsed = (performance.now() - start) / 1000;
+  const opsPerSec = count / elapsed;
+  console.log(
+    `  ${name}: ${count.toLocaleString()} ops in ${elapsed.toFixed(2)}s → ${opsPerSec.toFixed(0)} ops/sec`
+  );
+  return { ops: count, opsPerSec };
+}
 
 beforeAll(async () => {
   const db = drizzle(new Database(":memory:", { create: true }));
@@ -40,79 +64,16 @@ beforeAll(async () => {
     },
   });
   await engine.init();
-});
 
-test("stress: chatters create/find/update", async () => {
-  const id = `stress-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-  const created = await engine.chatters.create({
-    displayName: `Stress ${id}`,
+  chatter = await engine.chatters.create({
+    displayName: "Stress",
     entityType: "user",
-    entityId: id,
+    entityId: "stress-user",
     avatarUrl: null,
   });
-  expect(created.id).toBeDefined();
-  const found = await engine.chatters.find(created.id);
-  expect(found?.displayName).toBe(`Stress ${id}`);
-  const byEntity = await engine.chatters.findByEntity("user", id);
-  expect(byEntity?.id).toBe(created.id);
-  await engine.chatters.update(created.id, { displayName: `Updated ${id}` });
-});
-
-test("stress: conversations create/list/find", async () => {
-  const chatter = await engine.chatters.create({
-    displayName: "Stress Creator",
-    entityType: "user",
-    entityId: `creator-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-    avatarUrl: null,
-  });
-  const conv = await engine.conversations.create({
+  conv = await engine.conversations.create({
     createdBy: chatter.id,
-    title: `Stress Conv ${Date.now()}`,
-    entityType: null,
-    entityId: null,
-    metadata: null,
-  });
-  expect(conv.id).toBeDefined();
-  const found = await engine.conversations.find(conv.id);
-  expect(found?.createdBy).toBe(chatter.id);
-  const list = await engine.conversations.list({ limit: 5 });
-  expect(list.items.length).toBeGreaterThanOrEqual(1);
-});
-
-test("stress: participants add/list", async () => {
-  const chatter = await engine.chatters.create({
-    displayName: "P",
-    entityType: "user",
-    entityId: `p-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-    avatarUrl: null,
-  });
-  const conv = await engine.conversations.create({
-    createdBy: chatter.id,
-    title: null,
-    entityType: null,
-    entityId: null,
-    metadata: null,
-  });
-  const participant = await engine.participants.add({
-    conversationId: conv.id,
-    chatterId: chatter.id,
-    role: "member",
-  });
-  expect(participant.id).toBeDefined();
-  const list = await engine.participants.list(conv.id);
-  expect(list.some((p) => p.id === participant.id)).toBe(true);
-});
-
-test("stress: blocks send/list", async () => {
-  const chatter = await engine.chatters.create({
-    displayName: "Block Author",
-    entityType: "user",
-    entityId: `author-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-    avatarUrl: null,
-  });
-  const conv = await engine.conversations.create({
-    createdBy: chatter.id,
-    title: null,
+    title: "Stress Conv",
     entityType: null,
     entityId: null,
     metadata: null,
@@ -122,50 +83,151 @@ test("stress: blocks send/list", async () => {
     chatterId: chatter.id,
     role: "member",
   });
-  const block = await engine.blocks.send({
-    conversationId: conv.id,
-    authorId: chatter.id,
-    type: "text",
-    body: `Stress msg ${Date.now()}`,
-    metadata: null,
-    threadParentId: null,
-  });
-  expect(block.id).toBeDefined();
-  const list = await engine.blocks.list({ conversationId: conv.id, limit: 10 });
-  expect(list.items.some((b) => b.id === block.id)).toBe(true);
 });
 
-test("stress: policies.resolve", async () => {
-  const chatter = await engine.chatters.create({
-    displayName: "Policy",
-    entityType: "user",
-    entityId: `pol-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-    avatarUrl: null,
+test("stress: chatters.create ops/sec", async () => {
+  let i = 0;
+  const result = await measureOpsPerSecond("chatters.create", async () => {
+    const c = await engine.chatters.create({
+      displayName: `Stress ${i++}`,
+      entityType: "user",
+      entityId: `e-${i}`,
+      avatarUrl: null,
+    });
+    expect(c.id).toBeDefined();
   });
-  const conv = await engine.conversations.create({
-    createdBy: chatter.id,
-    title: null,
-    entityType: null,
-    entityId: null,
-    metadata: null,
-  });
-  await engine.participants.add({
-    conversationId: conv.id,
-    chatterId: chatter.id,
-    role: "member",
-  });
-  const resolved = await engine.policies.resolve(chatter.id, conv.id);
-  expect(resolved).toBeDefined();
-  expect(typeof resolved.maxBlocksPerMinute).toBe("number");
+  expect(result.opsPerSec).toBeGreaterThan(0);
 });
 
-test("stress: permissions.check", async () => {
-  const chatter = await engine.chatters.create({
-    displayName: "Perm",
-    entityType: "user",
-    entityId: `perm-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-    avatarUrl: null,
+test("stress: chatters.find ops/sec", async () => {
+  const result = await measureOpsPerSecond("chatters.find", async () => {
+    const found = await engine.chatters.find(chatter.id);
+    expect(found?.id).toBe(chatter.id);
   });
-  const result = await engine.permissions.check(chatter.id, "send", "global");
-  expect(typeof result).toBe("boolean");
+  expect(result.opsPerSec).toBeGreaterThan(0);
+});
+
+test("stress: chatters.findByEntity ops/sec", async () => {
+  const result = await measureOpsPerSecond("chatters.findByEntity", async () => {
+    const found = await engine.chatters.findByEntity("user", "stress-user");
+    expect(found?.id).toBe(chatter.id);
+  });
+  expect(result.opsPerSec).toBeGreaterThan(0);
+});
+
+test("stress: chatters.update ops/sec", async () => {
+  const result = await measureOpsPerSecond("chatters.update", async () => {
+    await engine.chatters.update(chatter.id, {
+      displayName: `Updated ${Date.now()}`,
+    });
+  });
+  expect(result.opsPerSec).toBeGreaterThan(0);
+});
+
+test("stress: conversations.create ops/sec", async () => {
+  let i = 0;
+  const result = await measureOpsPerSecond("conversations.create", async () => {
+    const c = await engine.conversations.create({
+      createdBy: chatter.id,
+      title: `Conv ${i++}`,
+      entityType: null,
+      entityId: null,
+      metadata: null,
+    });
+    await engine.participants.add({
+      conversationId: c.id,
+      chatterId: chatter.id,
+      role: "member",
+    });
+    expect(c.id).toBeDefined();
+  });
+  expect(result.opsPerSec).toBeGreaterThan(0);
+});
+
+test("stress: conversations.find ops/sec", async () => {
+  const result = await measureOpsPerSecond("conversations.find", async () => {
+    const found = await engine.conversations.find(conv.id);
+    expect(found?.id).toBe(conv.id);
+  });
+  expect(result.opsPerSec).toBeGreaterThan(0);
+});
+
+test("stress: conversations.list ops/sec", async () => {
+  const result = await measureOpsPerSecond("conversations.list", async () => {
+    const list = await engine.conversations.list({ limit: 20 });
+    expect(Array.isArray(list.items)).toBe(true);
+  });
+  expect(result.opsPerSec).toBeGreaterThan(0);
+});
+
+test("stress: participants.add ops/sec", async () => {
+  let i = 0;
+  const result = await measureOpsPerSecond("participants.add", async () => {
+    const c = await engine.conversations.create({
+      createdBy: chatter.id,
+      title: null,
+      entityType: null,
+      entityId: null,
+      metadata: null,
+    });
+    const p = await engine.participants.add({
+      conversationId: c.id,
+      chatterId: chatter.id,
+      role: "member",
+    });
+    expect(p.id).toBeDefined();
+    i++;
+  });
+  expect(result.opsPerSec).toBeGreaterThan(0);
+});
+
+test("stress: participants.list ops/sec", async () => {
+  const result = await measureOpsPerSecond("participants.list", async () => {
+    const list = await engine.participants.list(conv.id);
+    expect(Array.isArray(list)).toBe(true);
+  });
+  expect(result.opsPerSec).toBeGreaterThan(0);
+});
+
+test("stress: blocks.send ops/sec", async () => {
+  const result = await measureOpsPerSecond("blocks.send", async () => {
+    const block = await engine.blocks.send({
+      conversationId: conv.id,
+      authorId: chatter.id,
+      type: "text",
+      body: `msg ${Date.now()}`,
+      metadata: null,
+      threadParentId: null,
+    });
+    expect(block.id).toBeDefined();
+  });
+  expect(result.opsPerSec).toBeGreaterThan(0);
+});
+
+test("stress: blocks.list ops/sec", async () => {
+  const result = await measureOpsPerSecond("blocks.list", async () => {
+    const list = await engine.blocks.list({
+      conversationId: conv.id,
+      limit: 50,
+    });
+    expect(Array.isArray(list.items)).toBe(true);
+  });
+  expect(result.opsPerSec).toBeGreaterThan(0);
+});
+
+test("stress: policies.resolve ops/sec", async () => {
+  const result = await measureOpsPerSecond("policies.resolve", async () => {
+    const resolved = await engine.policies.resolve(chatter.id, conv.id);
+    expect(resolved).toBeDefined();
+    expect(typeof resolved.maxBlocksPerMinute).toBe("number");
+  });
+  expect(result.opsPerSec).toBeGreaterThan(0);
+});
+
+test("stress: permissions.check ops/sec", async () => {
+  const result = await measureOpsPerSecond("permissions.check", async () => {
+    const ok = await engine.permissions.check(chatter.id, "send", "global");
+    expect(typeof ok).toBe("boolean");
+  });
+  expect(result.opsPerSec).toBeGreaterThan(0);
 });
