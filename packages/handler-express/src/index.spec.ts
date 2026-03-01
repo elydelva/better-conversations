@@ -114,6 +114,15 @@ function createMockAdapter(): DatabaseAdapter {
       grant: async () => {},
       revoke: async () => {},
     },
+    registries: {
+      upsertBlock: async () => {},
+      upsertRole: async () => {},
+    },
+    policies: {
+      find: async () => null,
+      upsert: async () => {},
+      delete: async () => {},
+    },
   };
 }
 
@@ -203,5 +212,40 @@ describe("createExpressHandler", () => {
     const res = createMockRes();
     await handler(req as never, res as never);
     expect(res.statusCode).toBe(200);
+  });
+
+  describe("policy endpoints", () => {
+    test("GET /policies/roles returns role list", async () => {
+      const handler = createExpressHandler(engine);
+      const req = createMockReq({ method: "GET", path: "/policies/roles" });
+      const res = createMockRes();
+      await handler(req as never, res as never);
+      expect(res.statusCode).toBe(200);
+      expect(res.body).toHaveProperty("roles");
+      expect(Array.isArray((res.body as { roles: string[] }).roles)).toBe(true);
+      expect((res.body as { roles: string[] }).roles).toContain("member");
+    });
+
+    test("GET /policies/global returns global policy", async () => {
+      const handler = createExpressHandler(engine);
+      const req = createMockReq({ method: "GET", path: "/policies/global" });
+      const res = createMockRes();
+      await handler(req as never, res as never);
+      expect(res.statusCode).toBe(200);
+      expect(res.body).toHaveProperty("canJoinSelf");
+      expect((res.body as { canJoinSelf: boolean }).canJoinSelf).toBe(false);
+    });
+
+    test("PATCH /policies/global updates global policy", async () => {
+      const handler = createExpressHandler(engine);
+      const req = createMockReq({
+        method: "PATCH",
+        path: "/policies/global",
+        body: { maxBlocksPerMinute: 30 },
+      });
+      const res = createMockRes();
+      await handler(req as never, res as never);
+      expect([200, 204]).toContain(res.statusCode);
+    });
   });
 });

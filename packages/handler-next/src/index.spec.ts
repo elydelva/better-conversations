@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { type DatabaseAdapter, betterConversation } from "@better-conversation/core";
 import { createNextHandler } from "./index.js";
 
-function createMockAdapter(): DatabaseAdapter {
+function createFullMockAdapter(): DatabaseAdapter {
   const base = {
     id: "id",
     displayName: "Test",
@@ -114,6 +114,15 @@ function createMockAdapter(): DatabaseAdapter {
       grant: async () => {},
       revoke: async () => {},
     },
+    registries: {
+      upsertBlock: async () => {},
+      upsertRole: async () => {},
+    },
+    policies: {
+      find: async () => null,
+      upsert: async () => {},
+      delete: async () => {},
+    },
   };
 }
 
@@ -130,7 +139,7 @@ async function createRequest(
 }
 
 describe("createNextHandler", () => {
-  const engine = betterConversation({ adapter: createMockAdapter() });
+  const engine = betterConversation({ adapter: createFullMockAdapter() });
 
   test("returns GET, POST, PATCH, DELETE handlers", () => {
     const handler = createNextHandler(engine);
@@ -177,5 +186,49 @@ describe("createNextHandler", () => {
     const req = await createRequest("http://localhost/api/conversations");
     const res = await handler.GET(req);
     expect(res.status).toBe(200);
+  });
+
+  describe("policy endpoints", () => {
+    test("GET /policies/roles returns role list", async () => {
+      const handler = createNextHandler(engine);
+      const req = await createRequest("http://localhost/policies/roles");
+      const res = await handler.GET(req);
+      expect(res.status).toBe(200);
+      const json = await res.json();
+      expect(json).toHaveProperty("roles");
+      expect(Array.isArray(json.roles)).toBe(true);
+      expect(json.roles).toContain("member");
+    });
+
+    test("GET /policies/global returns global policy", async () => {
+      const handler = createNextHandler(engine);
+      const req = await createRequest("http://localhost/policies/global");
+      const res = await handler.GET(req);
+      expect(res.status).toBe(200);
+      const json = await res.json();
+      expect(json).toHaveProperty("canJoinSelf");
+      expect(json.canJoinSelf).toBe(false);
+      expect(json).toHaveProperty("allowedBlocks");
+    });
+
+    test("PATCH /policies/global updates global policy", async () => {
+      const handler = createNextHandler(engine);
+      const req = await createRequest("http://localhost/policies/global", {
+        method: "PATCH",
+        body: JSON.stringify({ maxBlocksPerMinute: 30 }),
+      });
+      const res = await handler.PATCH(req);
+      expect([200, 204]).toContain(res.status);
+    });
+
+    test("GET /policies/chatters/:chatterId returns resolved policy", async () => {
+      const handler = createNextHandler(engine);
+      const req = await createRequest("http://localhost/policies/chatters/ch1");
+      const res = await handler.GET(req);
+      expect(res.status).toBe(200);
+      const json = await res.json();
+      expect(json).toHaveProperty("canJoinSelf");
+      expect(json.canJoinSelf).toBe(false);
+    });
   });
 });

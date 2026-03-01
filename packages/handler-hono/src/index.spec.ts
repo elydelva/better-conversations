@@ -114,6 +114,15 @@ function createMockAdapter(): DatabaseAdapter {
       grant: async () => {},
       revoke: async () => {},
     },
+    registries: {
+      upsertBlock: async () => {},
+      upsertRole: async () => {},
+    },
+    policies: {
+      find: async () => null,
+      upsert: async () => {},
+      delete: async () => {},
+    },
   };
 }
 
@@ -205,5 +214,39 @@ describe("createHonoHandler", () => {
     });
     const res = await handler(c as never);
     expect(res.status).toBe(200);
+  });
+
+  describe("policy endpoints", () => {
+    test("GET /policies/roles returns role list", async () => {
+      const handler = createHonoHandler(engine);
+      const { c } = createMockContext({ method: "GET", path: "/policies/roles" });
+      const res = await handler(c as never);
+      expect(res.status).toBe(200);
+      const json = await res.json();
+      expect(json).toHaveProperty("roles");
+      expect(Array.isArray(json.roles)).toBe(true);
+      expect(json.roles).toContain("member");
+    });
+
+    test("GET /policies/global returns global policy", async () => {
+      const handler = createHonoHandler(engine);
+      const { c } = createMockContext({ method: "GET", path: "/policies/global" });
+      const res = await handler(c as never);
+      expect(res.status).toBe(200);
+      const json = await res.json();
+      expect(json).toHaveProperty("canJoinSelf");
+      expect(json.canJoinSelf).toBe(false);
+    });
+
+    test("PATCH /policies/global updates global policy", async () => {
+      const handler = createHonoHandler(engine);
+      const { c } = createMockContext({
+        method: "PATCH",
+        path: "/policies/global",
+        bodyText: JSON.stringify({ maxBlocksPerMinute: 30 }),
+      });
+      const res = await handler(c as never);
+      expect([200, 204]).toContain(res.status);
+    });
   });
 });
