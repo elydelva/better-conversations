@@ -27,3 +27,19 @@ export function errorToResponse(err: unknown): CoreResponse {
 export function successResponse(data: unknown, status = 200): CoreResponse {
   return { status, body: data };
 }
+
+export function streamResponse(
+  stream: ReadableStream,
+  headers?: Record<string, string>
+): CoreResponse {
+  return {
+    status: 200,
+    headers: {
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache",
+      Connection: "keep-alive",
+      ...headers,
+    },
+    stream,
+  };
+}

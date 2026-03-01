@@ -1,5 +1,5 @@
 export type { CoreRequest, CoreResponse, RouteHandler } from "./types.js";
-export { parseJsonBody, errorToResponse, successResponse } from "./utils.js";
+export { parseJsonBody, errorToResponse, successResponse, streamResponse } from "./utils.js";
 export { matchPath } from "./path.js";
 export type { PathMatch } from "./path.js";
 export { routes, findRoute } from "./routes.js";

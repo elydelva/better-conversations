@@ -11,6 +11,7 @@ import {
   handleConversationsCreate,
   handleConversationsFind,
   handleConversationsListOrFindByEntity,
+  handleConversationsStream,
   handleConversationsUpdate,
   handleParticipantsAdd,
   handleParticipantsList,
@@ -79,6 +80,7 @@ export const routes: Route[] = [
     path: "/conversations/:id/participants",
     handler: handleParticipantsAdd,
   },
+  { method: "GET", path: "/conversations/:id/stream", handler: handleConversationsStream },
   { method: "GET", path: "/conversations/:id/blocks", handler: handleBlocksList },
   { method: "POST", path: "/conversations/:id/blocks", handler: handleBlocksSend },
   {

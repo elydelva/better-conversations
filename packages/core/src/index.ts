@@ -43,6 +43,10 @@ export type {
 
 export type { ConversationConfig, ConversationPlugin } from "./config/index.js";
 
+export {
+  getDefaultGlobal,
+  mergePolicyLevels,
+} from "./policy/index.js";
 export type {
   PolicyObject,
   PolicyConfig,

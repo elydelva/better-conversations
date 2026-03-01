@@ -12,6 +12,7 @@ export interface CoreResponse {
   status: number;
   body?: unknown;
   headers?: Record<string, string>;
+  stream?: ReadableStream;
 }
 
 export type RouteHandler = (ctx: {
