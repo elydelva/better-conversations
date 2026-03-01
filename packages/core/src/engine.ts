@@ -1,4 +1,6 @@
 import type { ConversationConfig } from "./config/index.js";
+import type { Route } from "./handler/routes.js";
+import { buildRoutes } from "./handler/routes.js";
 import { defaultBlockRegistry } from "./registry/defaultBlockRegistry.js";
 import { defaultRoleRegistry } from "./registry/defaultRoleRegistry.js";
 import type { BlockRegistry, RoleRegistry } from "./registry/index.js";
@@ -31,7 +33,10 @@ export class ConversationEngine<
   private _initDone = false;
 
   constructor(private readonly config: ConversationConfig<TBlocks, TRoles>) {
-    const { adapter, hooks, generateId } = config;
+    const { adapter, generateId } = config;
+
+    const mergedHooks = this.mergeHooks();
+    const hooks = mergedHooks;
 
     this.chatters = new ChatterService(adapter.chatters);
     this.conversations = new ConversationService(adapter.conversations);
@@ -57,6 +62,37 @@ export class ConversationEngine<
       generateId,
     });
     this.permissions = new PermissionService(adapter.permissions);
+
+    this.attachPluginServices();
+  }
+
+  private mergeHooks(): ConversationConfig<TBlocks, TRoles>["hooks"] {
+    let merged = this.config.hooks ?? {};
+    for (const plugin of this.config.plugins ?? []) {
+      if (plugin.hooks) {
+        merged = { ...merged, ...plugin.hooks };
+      }
+    }
+    return merged;
+  }
+
+  private attachPluginServices(): void {
+    for (const plugin of this.config.plugins ?? []) {
+      const services = plugin.createServices?.(this, this.config);
+      if (services) {
+        for (const [key, svc] of Object.entries(services)) {
+          (this as Record<string, unknown>)[key] = svc;
+        }
+      }
+    }
+  }
+
+  getRoutes(): Route[] {
+    return buildRoutes(this.config.plugins);
+  }
+
+  getPlugin<T>(name: string): T | undefined {
+    return (this as Record<string, unknown>)[name] as T | undefined;
   }
 
   async init(): Promise<void> {

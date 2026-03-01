@@ -3,10 +3,7 @@ import type { ConversationHooks } from "../hooks/index.js";
 import type { PolicyConfig } from "../policy/index.js";
 import type { BlockRegistry, RoleRegistry } from "../registry/index.js";
 
-export interface ConversationPlugin {
-  name: string;
-  init?(engine: unknown): Promise<void> | void;
-}
+export type { ConversationPlugin } from "./Plugin.interface.js";
 
 export interface ConversationConfig<
   TBlocks extends BlockRegistry = BlockRegistry,

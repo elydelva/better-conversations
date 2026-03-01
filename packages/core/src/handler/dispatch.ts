@@ -15,7 +15,8 @@ export async function dispatch(
     : req.path;
   const normalizedPath = path.replace(/\/$/, "") || "/";
 
-  const found = findRoute(req.method, normalizedPath);
+  const routes = engine.getRoutes();
+  const found = findRoute(routes, req.method, normalizedPath);
   if (!found) {
     return {
       status: 404,

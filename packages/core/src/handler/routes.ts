@@ -1,3 +1,4 @@
+import type { ConversationPlugin } from "../config/Plugin.interface.js";
 import {
   handleBlocksDelete,
   handleBlocksList,
@@ -11,11 +12,9 @@ import {
   handleConversationsCreate,
   handleConversationsFind,
   handleConversationsListOrFindByEntity,
-  handleConversationsStream,
   handleConversationsUpdate,
   handleParticipantsAdd,
   handleParticipantsList,
-  handleParticipantsMarkRead,
   handleParticipantsRemove,
   handleParticipantsSetRole,
   handlePermissionsGrant,
@@ -39,7 +38,8 @@ export interface Route {
   handler: RouteHandler;
 }
 
-export const routes: Route[] = [
+/** Core routes (without stream, markRead — provided by plugins) */
+const coreRoutes: Route[] = [
   { method: "POST", path: "/chatters", handler: handleChattersCreate },
   {
     method: "GET",
@@ -54,11 +54,6 @@ export const routes: Route[] = [
     method: "GET",
     path: "/conversations",
     handler: handleConversationsListOrFindByEntity,
-  },
-  {
-    method: "PATCH",
-    path: "/conversations/:id/participants/:chatterId/read",
-    handler: handleParticipantsMarkRead,
   },
   {
     method: "PATCH",
@@ -80,7 +75,6 @@ export const routes: Route[] = [
     path: "/conversations/:id/participants",
     handler: handleParticipantsAdd,
   },
-  { method: "GET", path: "/conversations/:id/stream", handler: handleConversationsStream },
   { method: "GET", path: "/conversations/:id/blocks", handler: handleBlocksList },
   { method: "POST", path: "/conversations/:id/blocks", handler: handleBlocksSend },
   {
@@ -162,12 +156,22 @@ export const routes: Route[] = [
   },
 ];
 
+/** Build merged routes from core + plugin routes */
+export function buildRoutes(plugins?: ConversationPlugin[]): Route[] {
+  const pluginRoutes = plugins?.flatMap((p) => p.routes ?? []) ?? [];
+  return [...coreRoutes, ...pluginRoutes];
+}
+
+/** @deprecated Use buildRoutes(plugins) — kept for backward compat when no plugins */
+export const routes = coreRoutes;
+
 export function findRoute(
+  routesToSearch: Route[],
   method: string,
   path: string
 ): { route: Route; params: Record<string, string> } | null {
   const normalizedPath = path.replace(/\/$/, "") || "/";
-  for (const route of routes) {
+  for (const route of routesToSearch) {
     if (route.method !== method) continue;
     const { matches, params } = matchPath(route.path, normalizedPath);
     if (matches) return { route, params };
