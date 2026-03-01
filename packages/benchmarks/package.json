@@ -1,0 +1,21 @@
+{
+  "name": "@better-conversation/benchmarks",
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "bench": "bun run db:push && bun run src/run.ts",
+    "bench:only": "bun run src/run.ts",
+    "db:push": "drizzle-kit push",
+    "build": "echo Benchmarks OK"
+  },
+  "dependencies": {
+    "@better-conversation/adapter-drizzle": "workspace:*",
+    "@better-conversation/core": "workspace:*",
+    "drizzle-orm": "^0.45.1"
+  },
+  "devDependencies": {
+    "bun-types": "^1.2.0",
+    "drizzle-kit": "^0.28.1",
+    "typescript": "catalog:"
+  }
+}
