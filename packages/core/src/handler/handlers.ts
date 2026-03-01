@@ -7,9 +7,7 @@ import {
 } from "@better-conversation/errors";
 import type { ConversationEngine } from "../engine.js";
 import type { CoreRequest, RouteHandler } from "./types.js";
-import { streamResponse, successResponse } from "./utils.js";
-
-const SSE_POLL_INTERVAL_MS = 2000;
+import { successResponse } from "./utils.js";
 
 function body<T>(req: CoreRequest): T {
   return req.body as T;
@@ -297,38 +295,6 @@ export const handlePoliciesSetThread: RouteHandler = async ({ engine, req }) => 
   const data = body<Record<string, unknown>>(req);
   await engine.policies.setThread(blockId, data);
   return successResponse(null, 204);
-};
-
-export const handleConversationsStream: RouteHandler = async ({ engine, req }) => {
-  const conversationId = req.params.id;
-  const conversation = await engine.conversations.find(conversationId);
-  if (!conversation) {
-    throw new ConversationNotFoundError(conversationId);
-  }
-
-  const encoder = new TextEncoder();
-  const seenIds = new Set<string>();
-
-  const sseStream = new ReadableStream({
-    async pull(controller) {
-      await new Promise((r) => setTimeout(r, SSE_POLL_INTERVAL_MS));
-      try {
-        const result = await engine.blocks.list({ conversationId, limit: 20 });
-        const newBlocks = result.items.filter((b) => !seenIds.has(b.id) && b.status !== "deleted");
-        for (const block of newBlocks) {
-          seenIds.add(block.id);
-          controller.enqueue(
-            encoder.encode(`data: ${JSON.stringify({ event: "block:created", block })}\n\n`)
-          );
-        }
-        controller.enqueue(encoder.encode(`: heartbeat ${Date.now()}\n\n`));
-      } catch {
-        controller.enqueue(encoder.encode(`: heartbeat ${Date.now()}\n\n`));
-      }
-    },
-  });
-
-  return streamResponse(sseStream);
 };
 
 export const handlePermissionsList: RouteHandler = async () => {

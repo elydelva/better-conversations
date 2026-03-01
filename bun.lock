@@ -43,6 +43,7 @@
         "@better-conversation/adapter-drizzle": "workspace:*",
         "@better-conversation/core": "workspace:*",
         "@better-conversation/handler-next": "workspace:*",
+        "@better-conversation/plugin-sse": "workspace:*",
         "@radix-ui/react-avatar": "^1.1.11",
         "@radix-ui/react-dialog": "^1.1.15",
         "@radix-ui/react-dropdown-menu": "^2.1.16",
@@ -328,11 +329,23 @@
         "next": ">=14.0.0",
       },
     },
+    "packages/plugin-sse": {
+      "name": "@better-conversation/plugin-sse",
+      "version": "1.0.0",
+      "dependencies": {
+        "@better-conversation/core": "workspace:*",
+        "@better-conversation/errors": "workspace:*",
+      },
+      "devDependencies": {
+        "typescript": "catalog:",
+      },
+    },
     "packages/plugins": {
       "name": "@better-conversation/plugins",
       "version": "1.0.0",
       "dependencies": {
         "@better-conversation/core": "workspace:*",
+        "@better-conversation/plugin-sse": "workspace:*",
       },
       "devDependencies": {
         "typescript": "catalog:",
@@ -401,6 +414,8 @@
     "@better-conversation/handler-hono": ["@better-conversation/handler-hono@workspace:packages/handler-hono"],
 
     "@better-conversation/handler-next": ["@better-conversation/handler-next@workspace:packages/handler-next"],
+
+    "@better-conversation/plugin-sse": ["@better-conversation/plugin-sse@workspace:packages/plugin-sse"],
 
     "@better-conversation/plugins": ["@better-conversation/plugins@workspace:packages/plugins"],
 

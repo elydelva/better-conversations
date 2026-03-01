@@ -1,6 +1,7 @@
 import { drizzleAdapter } from "@better-conversation/adapter-drizzle";
 import { betterConversation } from "@better-conversation/core";
 import type { ConversationEngine } from "@better-conversation/core";
+import { ssePlugin } from "@better-conversation/plugin-sse";
 import { db } from "./db";
 
 const adapter = drizzleAdapter(db, { provider: "sqlite" });
@@ -12,6 +13,7 @@ export async function getEngine(): Promise<ConversationEngine> {
     engine = betterConversation({
       adapter,
       policies: {},
+      plugins: [ssePlugin],
     });
     await engine.init();
   }

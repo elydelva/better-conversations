@@ -2,8 +2,9 @@ import type { DatabaseAdapter } from "../adapter/index.js";
 import type { ConversationHooks } from "../hooks/index.js";
 import type { PolicyConfig } from "../policy/index.js";
 import type { BlockRegistry, RoleRegistry } from "../registry/index.js";
+import type { ConversationPlugin } from "./Plugin.interface.js";
 
-export type { ConversationPlugin } from "./Plugin.interface.js";
+export type { ConversationPlugin };
 
 export interface ConversationConfig<
   TBlocks extends BlockRegistry = BlockRegistry,

@@ -111,6 +111,7 @@ export {
   parseJsonBody,
   errorToResponse,
   successResponse,
+  streamResponse,
   matchPath,
   routes,
   findRoute,
