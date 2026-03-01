@@ -1,6 +1,6 @@
 {
   "name": "@better-conversation/errors",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -17,5 +17,7 @@
   "devDependencies": {
     "typescript": "catalog:"
   },
-  "files": ["dist"]
+  "files": [
+    "dist"
+  ]
 }
