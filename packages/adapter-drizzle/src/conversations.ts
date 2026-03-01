@@ -57,7 +57,7 @@ export function createConversationsAdapter(ctx: DrizzleAdapterContext): Conversa
       if (filters.entityType) conditions.push(eq(conversations.entityType, filters.entityType));
       if (filters.entityId) conditions.push(eq(conversations.entityId, filters.entityId));
       if (filters.status) conditions.push(eq(conversations.status, filters.status));
-      const limit = filters.limit ?? 50;
+      const limit = Math.min(Math.max(filters.limit ?? 50, 1), 100);
 
       if (filters.chatterId) {
         const chatterId = filters.chatterId;

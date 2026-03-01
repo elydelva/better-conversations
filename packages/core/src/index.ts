@@ -114,6 +114,8 @@ export type {
 export {
   dispatch,
   parseJsonBody,
+  queryToRecord,
+  parseLimit,
   errorToResponse,
   successResponse,
   streamResponse,

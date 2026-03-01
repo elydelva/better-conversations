@@ -1,6 +1,12 @@
 import { describe, expect, test } from "bun:test";
 import { BlockRefusedError } from "@better-conversation/errors";
-import { errorToResponse, parseJsonBody, successResponse } from "./utils.js";
+import {
+  errorToResponse,
+  parseJsonBody,
+  parseLimit,
+  queryToRecord,
+  successResponse,
+} from "./utils.js";
 
 describe("parseJsonBody", () => {
   test("returns null for null input", () => {
@@ -59,6 +65,40 @@ describe("errorToResponse", () => {
       code: "INTERNAL_ERROR",
       message: "An unexpected error occurred",
     });
+  });
+});
+
+describe("parseLimit", () => {
+  test("returns default when undefined", () => {
+    expect(parseLimit(undefined, 50)).toBe(50);
+  });
+  test("bounds to 1-100", () => {
+    expect(parseLimit("200", 50)).toBe(100);
+    expect(parseLimit("0", 50)).toBe(50);
+    expect(parseLimit("-5", 50)).toBe(50);
+  });
+  test("parses valid numbers", () => {
+    expect(parseLimit("25", 50)).toBe(25);
+    expect(parseLimit("1", 50)).toBe(1);
+  });
+  test("returns default for NaN", () => {
+    expect(parseLimit("abc", 50)).toBe(50);
+  });
+});
+
+describe("queryToRecord", () => {
+  test("converts query to Record<string, string>", () => {
+    expect(queryToRecord({ limit: "10", cursor: "x" })).toEqual({ limit: "10", cursor: "x" });
+  });
+  test("takes first element of arrays", () => {
+    expect(queryToRecord({ limit: ["20", "30"] })).toEqual({ limit: "20" });
+  });
+  test("skips undefined and null", () => {
+    expect(queryToRecord({ a: "1", b: undefined, c: null })).toEqual({ a: "1" });
+  });
+  test("returns empty for null/undefined input", () => {
+    expect(queryToRecord(null)).toEqual({});
+    expect(queryToRecord(undefined)).toEqual({});
   });
 });
 

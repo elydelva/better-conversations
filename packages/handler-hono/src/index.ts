@@ -3,6 +3,7 @@ import {
   type CoreRequest,
   dispatch,
   parseJsonBody,
+  queryToRecord,
 } from "@better-conversation/core";
 import type { Context } from "hono";
 
@@ -14,19 +15,9 @@ export interface CreateHonoHandlerOptions {
   requireAuth?: boolean;
 }
 
-function queryToRecord(q: Record<string, string | string[] | undefined>): Record<string, string> {
-  const out: Record<string, string> = {};
-  for (const [k, v] of Object.entries(q ?? {})) {
-    if (v !== undefined) {
-      out[k] = Array.isArray(v) ? v[0] : String(v);
-    }
-  }
-  return out;
-}
-
 async function toCoreRequest(c: Context, options?: CreateHonoHandlerOptions): Promise<CoreRequest> {
   const path = c.req.path;
-  const query = queryToRecord(c.req.query() as Record<string, string | string[] | undefined>);
+  const query = queryToRecord(c.req.query() as Record<string, unknown>);
 
   let body: unknown = null;
   if (c.req.method === "POST" || c.req.method === "PATCH") {

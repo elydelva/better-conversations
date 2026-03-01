@@ -10,7 +10,12 @@ async function handle(
   context?: { params: Promise<{ slug?: string[] }> }
 ) {
   const engine = await getEngine();
-  const handler = createNextHandler(engine, { basePath });
+  const handler = createNextHandler(engine, {
+    basePath,
+    getCurrentChatter: async (r) => r.headers.get("x-chatter-id") ?? null,
+    // requireAuth: false for playground bootstrap (chatter selection); set true in production with real auth
+    requireAuth: false,
+  });
   const h = handler[method];
   // Cast needed: NextRequest types from app vs handler-next can differ with multiple next installs
   const reqForHandler = req as unknown as Parameters<typeof handler.GET>[0];

@@ -213,7 +213,9 @@ export class BlockService {
     }
 
     if (result.type === "defer" && result.fn) {
-      result.fn().catch(() => {});
+      result.fn().catch((err) => {
+        console.warn("[BlockService] Defer hook failed", err);
+      });
     }
 
     if (hooks?.onBlockAfterSend) {

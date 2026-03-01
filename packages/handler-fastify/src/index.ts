@@ -3,6 +3,7 @@ import {
   type CoreRequest,
   dispatch,
   parseJsonBody,
+  queryToRecord,
 } from "@better-conversation/core";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 
@@ -12,16 +13,6 @@ export interface CreateFastifyHandlerOptions {
   getCurrentChatter?: (req: FastifyRequest) => Promise<string | null> | string | null;
   /** If true, return 401 when getCurrentChatter returns null */
   requireAuth?: boolean;
-}
-
-function queryToRecord(q: FastifyRequest["query"]): Record<string, string> {
-  const out: Record<string, string> = {};
-  for (const [k, v] of Object.entries(q ?? {})) {
-    if (v !== undefined && v !== null) {
-      out[k] = Array.isArray(v) ? (v[0] as string) : String(v);
-    }
-  }
-  return out;
 }
 
 function getPath(req: FastifyRequest): string {
@@ -34,7 +25,7 @@ async function toCoreRequest(
   options?: CreateFastifyHandlerOptions
 ): Promise<CoreRequest> {
   const path = getPath(req);
-  const query = queryToRecord(req.query);
+  const query = queryToRecord(req.query as Record<string, unknown>);
 
   let body: unknown = null;
   if (req.method === "POST" || req.method === "PATCH") {

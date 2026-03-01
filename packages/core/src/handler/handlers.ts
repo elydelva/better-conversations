@@ -1,6 +1,9 @@
 import {
+  BlockValidationError,
   ChatterNotFoundError,
+  ChatterValidationError,
   ConversationNotFoundError,
+  ConversationValidationError,
   ParticipantNotFoundError,
   ParticipantValidationError,
   PermissionDeniedError,
@@ -8,10 +11,16 @@ import {
 } from "@better-conversation/errors";
 import type { ConversationEngine } from "../engine.js";
 import type { CoreRequest, RouteHandler } from "./types.js";
-import { successResponse } from "./utils.js";
+import { parseLimit, successResponse } from "./utils.js";
 
 function body<T>(req: CoreRequest): T {
   return req.body as T;
+}
+
+function requireAuth(req: CoreRequest): void {
+  if (!req.auth?.chatterId) {
+    throw new PermissionDeniedError("authentication_required");
+  }
 }
 
 function requireAuthMatch(req: CoreRequest, expectedChatterId: string): void {
@@ -27,6 +36,16 @@ export const handleChattersCreate: RouteHandler = async ({ engine, req }) => {
     entityId?: string;
     avatarUrl?: string;
   }>(req);
+  if (
+    !data ||
+    typeof data !== "object" ||
+    typeof data.displayName !== "string" ||
+    !data.displayName.trim() ||
+    typeof data.entityType !== "string" ||
+    !data.entityType.trim()
+  ) {
+    throw new ChatterValidationError("displayName and entityType are required");
+  }
   const chatter = await engine.chatters.create({
     displayName: data.displayName,
     entityType: data.entityType,
@@ -61,7 +80,7 @@ export const handleChattersUpdate: RouteHandler = async ({ engine, req }) => {
 };
 
 export const handleChattersList: RouteHandler = async ({ engine, req }) => {
-  const limit = req.query.limit ? Number.parseInt(req.query.limit, 10) : 50;
+  const limit = parseLimit(req.query.limit, 50);
   const cursor = req.query.cursor;
   const result = await engine.chatters.list({ limit, cursor });
   return successResponse(result);
@@ -70,7 +89,7 @@ export const handleChattersList: RouteHandler = async ({ engine, req }) => {
 export const handleChatterConversations: RouteHandler = async ({ engine, req }) => {
   const chatterId = req.params.id;
   requireAuthMatch(req, chatterId);
-  const limit = req.query.limit ? Number.parseInt(req.query.limit, 10) : 50;
+  const limit = parseLimit(req.query.limit, 50);
   const cursor = req.query.cursor;
   const result = await engine.conversations.list({
     chatterId,
@@ -90,6 +109,14 @@ export const handleConversationsCreate: RouteHandler = async ({ engine, req }) =
     metadata?: Record<string, unknown>;
     participants?: Array<{ chatterId: string; role: string }>;
   }>(req);
+  if (
+    !data ||
+    typeof data !== "object" ||
+    typeof data.createdBy !== "string" ||
+    !data.createdBy.trim()
+  ) {
+    throw new ConversationValidationError("createdBy is required");
+  }
   requireAuthMatch(req, data.createdBy);
   const conv = await engine.conversations.create({
     title: data.title ?? null,
@@ -148,7 +175,7 @@ export const handleConversationsListOrFindByEntity: RouteHandler = async ({ engi
     const convs = await engine.conversations.findByEntity(entityType, entityId);
     return successResponse(convs);
   }
-  const limit = req.query.limit ? Number.parseInt(req.query.limit, 10) : 50;
+  const limit = parseLimit(req.query.limit, 50);
   const result = await engine.conversations.list({
     entityType,
     entityId,
@@ -216,7 +243,7 @@ export const handleParticipantsSetRole: RouteHandler = async ({ engine, req }) =
 
 export const handleBlocksList: RouteHandler = async ({ engine, req }) => {
   const conversationId = req.params.id;
-  const limit = req.query.limit ? Number.parseInt(req.query.limit, 10) : 50;
+  const limit = parseLimit(req.query.limit, 50);
   const beforeRaw = req.query.before;
   const afterRaw = req.query.after;
   const before = beforeRaw ? new Date(beforeRaw) : undefined;
@@ -241,6 +268,16 @@ export const handleBlocksSend: RouteHandler = async ({ engine, req }) => {
     metadata?: Record<string, unknown>;
     threadParentId?: string;
   }>(req);
+  if (
+    !data ||
+    typeof data !== "object" ||
+    typeof data.authorId !== "string" ||
+    !data.authorId.trim() ||
+    typeof data.type !== "string" ||
+    !data.type.trim()
+  ) {
+    throw new BlockValidationError("authorId and type are required");
+  }
   requireAuthMatch(req, data.authorId);
   const block = await engine.blocks.send({
     conversationId,
@@ -283,6 +320,7 @@ export const handlePoliciesGetGlobal: RouteHandler = async ({ engine }) => {
 };
 
 export const handlePoliciesSetGlobal: RouteHandler = async ({ engine, req }) => {
+  requireAuth(req);
   const data = body<Record<string, unknown>>(req);
   await engine.policies.setGlobal(data);
   return successResponse(null, 204);
@@ -294,6 +332,7 @@ export const handlePoliciesListRoles: RouteHandler = async ({ engine }) => {
 };
 
 export const handlePoliciesSetRole: RouteHandler = async ({ engine, req }) => {
+  requireAuth(req);
   const role = req.params.role;
   const data = body<Record<string, unknown>>(req);
   await engine.policies.setRole(role, data);
@@ -318,6 +357,7 @@ export const handlePoliciesSetChatter: RouteHandler = async ({ engine, req }) =>
 };
 
 export const handlePoliciesSetConversation: RouteHandler = async ({ engine, req }) => {
+  requireAuth(req);
   const conversationId = req.params.id;
   const data = body<Record<string, unknown>>(req);
   await engine.policies.setConversation(conversationId, data);
@@ -325,6 +365,7 @@ export const handlePoliciesSetConversation: RouteHandler = async ({ engine, req 
 };
 
 export const handlePoliciesSetThread: RouteHandler = async ({ engine, req }) => {
+  requireAuth(req);
   const conversationId = req.params.id;
   const blockId = req.params.blockId;
   const data = body<Record<string, unknown>>(req);
@@ -337,6 +378,7 @@ export const handlePermissionsList: RouteHandler = async () => {
 };
 
 export const handlePermissionsGrant: RouteHandler = async ({ engine, req }) => {
+  requireAuth(req);
   const chatterId = req.params.id;
   const data = body<{ action: string; scope?: string }>(req);
   await engine.permissions.grant(chatterId, data.action, data.scope);
@@ -344,6 +386,7 @@ export const handlePermissionsGrant: RouteHandler = async ({ engine, req }) => {
 };
 
 export const handlePermissionsRevoke: RouteHandler = async ({ engine, req }) => {
+  requireAuth(req);
   const chatterId = req.params.id;
   const action = req.params.action;
   await engine.permissions.revoke(chatterId, action);

@@ -8,6 +8,8 @@ export interface ClientOptions {
   baseURL: string;
   fetchFn?: typeof globalThis.fetch;
   fetchOptions?: RequestInit;
+  /** Dynamic headers merged into each request (e.g. for auth: X-Chatter-Id) */
+  getHeaders?: () => Record<string, string> | Promise<Record<string, string>>;
   plugins?: ConversationClientPlugin[];
 }
 

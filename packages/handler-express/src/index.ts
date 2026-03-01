@@ -3,6 +3,7 @@ import {
   type CoreRequest,
   dispatch,
   parseJsonBody,
+  queryToRecord,
 } from "@better-conversation/core";
 import type { Request, RequestHandler, Response } from "express";
 
@@ -14,22 +15,12 @@ export interface CreateExpressHandlerOptions {
   requireAuth?: boolean;
 }
 
-function queryToRecord(q: Request["query"]): Record<string, string> {
-  const out: Record<string, string> = {};
-  for (const [k, v] of Object.entries(q ?? {})) {
-    if (v !== undefined && v !== null) {
-      out[k] = Array.isArray(v) ? (v[0] as string) : String(v);
-    }
-  }
-  return out;
-}
-
 async function toCoreRequest(
   req: Request,
   options?: CreateExpressHandlerOptions
 ): Promise<CoreRequest> {
   const path = req.path;
-  const query = queryToRecord(req.query);
+  const query = queryToRecord(req.query as Record<string, unknown>);
 
   let body: unknown = null;
   if (req.method === "POST" || req.method === "PATCH") {
@@ -57,12 +48,12 @@ async function toCoreRequest(
   return coreReq;
 }
 
-function sendResponse(
+async function sendResponse(
   res: Response,
   status: number,
   body?: unknown,
   options?: { stream?: ReadableStream; headers?: Record<string, string> }
-): void {
+): Promise<void> {
   if (options?.stream) {
     res.writeHead(status, options.headers);
     const reader = options.stream.getReader();
@@ -70,12 +61,12 @@ function sendResponse(
       reader.read().then(({ done, value }) => {
         if (done) {
           res.end();
-          return;
+          return Promise.resolve();
         }
         res.write(Buffer.from(value));
         return pump();
       });
-    pump();
+    await pump();
     return;
   }
   if (status === 204) {
@@ -98,7 +89,7 @@ export function createExpressHandler(
       return;
     }
     const coreRes = await dispatch(engine, coreReq, basePath);
-    sendResponse(res, coreRes.status, coreRes.body, {
+    await sendResponse(res, coreRes.status, coreRes.body, {
       stream: coreRes.stream,
       headers: coreRes.headers,
     });

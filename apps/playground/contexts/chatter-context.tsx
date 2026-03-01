@@ -1,5 +1,6 @@
 "use client";
 
+import { getAuthChatterId, setAuthChatterId } from "@/lib/auth-header";
 import type { Chatter } from "@better-conversation/core";
 import type React from "react";
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
@@ -19,6 +20,7 @@ export function ChatterProvider({ children }: { children: React.ReactNode }) {
 
   const setActiveChatter = useCallback((chatter: Chatter | null) => {
     setActiveChatterState(chatter);
+    setAuthChatterId(chatter?.id ?? null);
     if (chatter) {
       localStorage.setItem(STORAGE_KEY, chatter.id);
     } else {
@@ -26,14 +28,10 @@ export function ChatterProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // Restore from localStorage on mount - caller must fetch and pass chatter if needed
   const storedId = typeof window !== "undefined" ? localStorage.getItem(STORAGE_KEY) : null;
   useEffect(() => {
-    if (storedId && !activeChatter) {
-      // Don't auto-fetch - let pages that need it call chattersApi.find
-      // We just clear if it was stale
-    }
-  }, [storedId, activeChatter]);
+    setAuthChatterId(activeChatter?.id ?? storedId);
+  }, [activeChatter, storedId]);
 
   return (
     <ChatterContext.Provider

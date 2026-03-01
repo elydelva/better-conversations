@@ -45,7 +45,7 @@ export function createBlocksAdapter(ctx: DrizzleAdapterContext): BlockAdapter {
         conditions.push(eq(blocks.threadParentId, filters.threadParentId));
       if (filters.after) conditions.push(gte(blocks.createdAt, filters.after));
       if (filters.before) conditions.push(lt(blocks.createdAt, filters.before));
-      const limit = filters.limit ?? 50;
+      const limit = Math.min(Math.max(filters.limit ?? 50, 1), 100);
       const result = await db
         .select()
         .from(blocks)

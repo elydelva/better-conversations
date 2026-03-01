@@ -31,7 +31,8 @@ export const handleConversationsStream: RouteHandler = async ({ engine, req }) =
           );
         }
         controller.enqueue(encoder.encode(`: heartbeat ${Date.now()}\n\n`));
-      } catch {
+      } catch (e) {
+        console.warn("[SSE] Poll error for conversation", conversationId, e);
         controller.enqueue(encoder.encode(`: heartbeat ${Date.now()}\n\n`));
       }
     },

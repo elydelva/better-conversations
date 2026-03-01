@@ -37,6 +37,7 @@ export function createBetterConversationsClient(options: ClientOptions) {
     baseURL,
     fetchFn = globalThis.fetch,
     fetchOptions,
+    getHeaders,
     plugins: pluginsOption = [],
   } = options;
 
@@ -67,6 +68,10 @@ export function createBetterConversationsClient(options: ClientOptions) {
       opts.query = Object.fromEntries(
         Object.entries(query).filter(([, v]) => v !== undefined && v !== "")
       );
+    }
+    if (getHeaders) {
+      const headers = await Promise.resolve(getHeaders());
+      opts.headers = { ...(fetchOptions?.headers as Record<string, string>), ...headers };
     }
     const res = await $fetch(url, opts);
     return res as T;

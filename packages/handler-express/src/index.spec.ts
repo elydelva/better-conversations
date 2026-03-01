@@ -236,8 +236,10 @@ describe("createExpressHandler", () => {
       expect((res.body as { canJoinSelf: boolean }).canJoinSelf).toBe(false);
     });
 
-    test("PATCH /policies/global updates global policy", async () => {
-      const handler = createExpressHandler(engine);
+    test("PATCH /policies/global updates global policy when authenticated", async () => {
+      const handler = createExpressHandler(engine, {
+        getCurrentChatter: () => "id",
+      });
       const req = createMockReq({
         method: "PATCH",
         path: "/policies/global",
@@ -246,6 +248,18 @@ describe("createExpressHandler", () => {
       const res = createMockRes();
       await handler(req as never, res as never);
       expect([200, 204]).toContain(res.statusCode);
+    });
+
+    test("PATCH /policies/global returns 403 when not authenticated", async () => {
+      const handler = createExpressHandler(engine);
+      const req = createMockReq({
+        method: "PATCH",
+        path: "/policies/global",
+        body: { maxBlocksPerMinute: 30 },
+      });
+      const res = createMockRes();
+      await handler(req as never, res as never);
+      expect(res.statusCode).toBe(403);
     });
   });
 });
