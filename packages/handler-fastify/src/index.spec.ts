@@ -131,8 +131,25 @@ function createMockAdapter(): DatabaseAdapter {
   };
 }
 
+const permissiveSecurity = {
+  requireAuth: true,
+  participantAccessControl: false,
+  allowListChatters: true,
+  allowListConversations: true,
+  allowListConversationsByEntity: true,
+  archiveRequiresPermission: false,
+  addParticipantRequiresRole: false,
+  removeParticipantRequiresRole: false,
+  setRoleRequiresAdmin: false,
+  grantRevokePermissionsRequiresAdmin: false,
+  policyWriteRequiresAdmin: false,
+};
+
 describe("createFastifyHandler", () => {
-  const engine = betterConversation({ adapter: createMockAdapter() });
+  const engine = betterConversation({
+    adapter: createMockAdapter(),
+    security: permissiveSecurity,
+  });
 
   test("returns plugin function", () => {
     const plugin = createFastifyHandler(engine);

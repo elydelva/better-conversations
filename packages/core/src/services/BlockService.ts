@@ -42,17 +42,25 @@ export class BlockService {
     const { adapter, hooks, generateId } = this.config;
     const genId = generateId ?? (() => crypto.randomUUID());
 
-    const conversation = await adapter.conversations.find(input.conversationId);
+    const [conversation, author, participants] = await Promise.all([
+      adapter.conversations.find(input.conversationId),
+      adapter.chatters.find(input.authorId),
+      adapter.participants.list(input.conversationId),
+    ]);
     if (!conversation) {
       throw new ConversationNotFoundError(input.conversationId);
     }
-
-    const author = await adapter.chatters.find(input.authorId);
     if (!author) {
       throw new ChatterNotFoundError(input.authorId);
     }
-
-    const participants = await adapter.participants.list(input.conversationId);
+    const activeParticipants = participants.filter((p) => !p.leftAt);
+    const isAuthorParticipant = activeParticipants.some((p) => p.chatterId === input.authorId);
+    if (!isAuthorParticipant) {
+      throw new BlockRefusedError("Author must be a participant of the conversation", {
+        code: "NOT_PARTICIPANT",
+        expose: true,
+      });
+    }
     const isThread = !!input.threadParentId;
     const isFirstReply = isThread
       ? (
@@ -310,8 +318,10 @@ export class BlockService {
       }
     }
 
-    const conversation = await this.config.adapter.conversations.find(block.conversationId);
-    const author = await this.config.adapter.chatters.find(block.authorId);
+    const [conversation, author] = await Promise.all([
+      this.config.adapter.conversations.find(block.conversationId),
+      this.config.adapter.chatters.find(block.authorId),
+    ]);
 
     if (conversation && author) {
       const ctx: BlockDeleteCtx = {

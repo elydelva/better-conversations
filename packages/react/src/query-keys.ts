@@ -8,6 +8,8 @@ export const queryKeys = {
     list: (params?: { limit?: number; cursor?: string }) =>
       ["chatters", { limit: params?.limit, cursor: params?.cursor }] as const,
     detail: (chatterId: string) => ["chatters", chatterId] as const,
+    conversations: (chatterId: string, params?: { limit?: number; cursor?: string }) =>
+      ["chatters", chatterId, "conversations", params] as const,
   },
   conversations: {
     all: ["conversations"] as const,

@@ -3,9 +3,26 @@ import { createMockAdapter } from "../fixtures/index.js";
 import { betterConversation } from "../index.js";
 import { dispatch } from "./dispatch.js";
 
+const permissiveSecurity = {
+  requireAuth: false,
+  participantAccessControl: false,
+  allowListChatters: true,
+  allowListConversations: true,
+  allowListConversationsByEntity: true,
+  archiveRequiresPermission: false,
+  addParticipantRequiresRole: false,
+  removeParticipantRequiresRole: false,
+  setRoleRequiresAdmin: false,
+  grantRevokePermissionsRequiresAdmin: false,
+  policyWriteRequiresAdmin: false,
+};
+
 describe("dispatch", () => {
   test("dispatches to correct handler with params", async () => {
-    const engine = betterConversation({ adapter: createMockAdapter() });
+    const engine = betterConversation({
+      adapter: createMockAdapter(),
+      security: permissiveSecurity,
+    });
     const req = {
       method: "GET",
       path: "/conversations",
@@ -19,7 +36,10 @@ describe("dispatch", () => {
   });
 
   test("returns 404 for unmatched route", async () => {
-    const engine = betterConversation({ adapter: createMockAdapter() });
+    const engine = betterConversation({
+      adapter: createMockAdapter(),
+      security: permissiveSecurity,
+    });
     const req = {
       method: "GET",
       path: "/nonexistent/path",
@@ -33,7 +53,10 @@ describe("dispatch", () => {
   });
 
   test("wraps handler errors via errorToResponse", async () => {
-    const engine = betterConversation({ adapter: createMockAdapter() });
+    const engine = betterConversation({
+      adapter: createMockAdapter(),
+      security: permissiveSecurity,
+    });
     const req = {
       method: "GET",
       path: "/chatters/nonexistent-id",
@@ -50,7 +73,10 @@ describe("dispatch", () => {
   });
 
   test("GET /policies/roles returns role list", async () => {
-    const engine = betterConversation({ adapter: createMockAdapter() });
+    const engine = betterConversation({
+      adapter: createMockAdapter(),
+      security: permissiveSecurity,
+    });
     const req = {
       method: "GET",
       path: "/policies/roles",
@@ -66,7 +92,10 @@ describe("dispatch", () => {
   });
 
   test("auth: when req.auth.chatterId does not match params.chatterId, returns 403", async () => {
-    const engine = betterConversation({ adapter: createMockAdapter() });
+    const engine = betterConversation({
+      adapter: createMockAdapter(),
+      security: permissiveSecurity,
+    });
     const req = {
       method: "GET",
       path: "/policies/chatters/ch1",
@@ -80,7 +109,10 @@ describe("dispatch", () => {
   });
 
   test("auth: when req.auth.chatterId matches params.chatterId, returns 200", async () => {
-    const engine = betterConversation({ adapter: createMockAdapter() });
+    const engine = betterConversation({
+      adapter: createMockAdapter(),
+      security: permissiveSecurity,
+    });
     const req = {
       method: "GET",
       path: "/policies/chatters/ch1",
@@ -94,7 +126,10 @@ describe("dispatch", () => {
   });
 
   test("POST /chatters with invalid body returns 400 ValidationError", async () => {
-    const engine = betterConversation({ adapter: createMockAdapter() });
+    const engine = betterConversation({
+      adapter: createMockAdapter(),
+      security: permissiveSecurity,
+    });
     const req = {
       method: "POST",
       path: "/chatters",
@@ -108,7 +143,10 @@ describe("dispatch", () => {
   });
 
   test("POST /chatters with valid body returns 201", async () => {
-    const engine = betterConversation({ adapter: createMockAdapter() });
+    const engine = betterConversation({
+      adapter: createMockAdapter(),
+      security: permissiveSecurity,
+    });
     const req = {
       method: "POST",
       path: "/chatters",
@@ -120,6 +158,27 @@ describe("dispatch", () => {
     expect(res.status).toBe(201);
     expect(res.body).toHaveProperty("id");
     expect(res.body).toHaveProperty("displayName");
+  });
+
+  test("security: GET /chatters without admin:listChatters returns 403 when allowListChatters false", async () => {
+    const engine = betterConversation({
+      adapter: createMockAdapter(),
+      security: {
+        ...permissiveSecurity,
+        allowListChatters: false,
+      },
+    });
+    const req = {
+      method: "GET",
+      path: "/chatters",
+      params: {},
+      query: {},
+      body: null,
+      auth: { chatterId: "ch1" },
+    };
+    const res = await dispatch(engine, req);
+    expect(res.status).toBe(403);
+    expect((res.body as { code?: string }).code).toBe("FORBIDDEN");
   });
 
   test("strips basePath before matching", async () => {
@@ -139,7 +198,10 @@ describe("dispatch", () => {
         }),
       },
     });
-    const engine = betterConversation({ adapter });
+    const engine = betterConversation({
+      adapter,
+      security: permissiveSecurity,
+    });
     const req = {
       method: "GET",
       path: "/api/conversations/conv-1",

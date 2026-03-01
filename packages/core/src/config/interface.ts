@@ -4,6 +4,7 @@ import type { ConversationHooks } from "../hooks/index.js";
 import type { PolicyConfig } from "../policy/index.js";
 import type { BlockRegistry, RoleRegistry } from "../registry/index.js";
 import type { ConversationPlugin } from "./Plugin.interface.js";
+import type { SecurityConfig } from "./SecurityConfig.interface.js";
 
 export type { ConversationPlugin };
 
@@ -21,4 +22,6 @@ export interface ConversationConfig<
   plugins?: ConversationPlugin[];
   tablePrefix?: string;
   generateId?: () => string;
+  /** Configuration de sécurité. Valeurs par défaut restrictives si absent. */
+  security?: Partial<SecurityConfig>;
 }

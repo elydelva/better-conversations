@@ -34,33 +34,40 @@ export class PolicyService {
     const strategy: MergeStrategy = policiesConfig?.mergeStrategy ?? "override";
     const levels: Partial<PolicyObject>[] = [];
 
-    const globalPolicy =
-      policiesConfig?.global ?? (await adapter.policies.find("global", GLOBAL_SCOPE_ID))?.policy;
+    const [globalRow, participant, chatterRow, convRow, threadRow] = await Promise.all([
+      policiesConfig?.global
+        ? Promise.resolve(null)
+        : adapter.policies.find("global", GLOBAL_SCOPE_ID),
+      conversationId ? adapter.participants.find(conversationId, chatterId) : Promise.resolve(null),
+      adapter.policies.find("chatter", chatterId),
+      conversationId
+        ? adapter.policies.find("conversation", conversationId)
+        : Promise.resolve(null),
+      threadParentBlockId
+        ? adapter.policies.find("thread", threadParentBlockId)
+        : Promise.resolve(null),
+    ]);
+
+    const globalPolicy = policiesConfig?.global ?? globalRow?.policy;
     if (globalPolicy) levels.push(globalPolicy);
 
     let role = "member";
-    if (conversationId) {
-      const participant = await adapter.participants.find(conversationId, chatterId);
-      if (participant?.role) role = participant.role;
-    }
+    if (participant?.role) role = participant.role;
+
     const rolePolicy =
       roleRegistry[role]?.policy ??
       policiesConfig?.roles?.[role] ??
       (await adapter.policies.find("role", role))?.policy;
     if (rolePolicy) levels.push(rolePolicy);
 
-    const chatterPolicy = (await adapter.policies.find("chatter", chatterId))?.policy;
+    const chatterPolicy = chatterRow?.policy;
     if (chatterPolicy) levels.push(chatterPolicy);
 
-    if (conversationId) {
-      const convPolicy = (await adapter.policies.find("conversation", conversationId))?.policy;
-      if (convPolicy) levels.push(convPolicy);
-    }
+    const convPolicy = convRow?.policy;
+    if (convPolicy) levels.push(convPolicy);
 
-    if (threadParentBlockId) {
-      const threadPolicy = (await adapter.policies.find("thread", threadParentBlockId))?.policy;
-      if (threadPolicy) levels.push(threadPolicy);
-    }
+    const threadPolicy = threadRow?.policy;
+    if (threadPolicy) levels.push(threadPolicy);
 
     let resolved = mergePolicyLevels(levels, strategy);
 

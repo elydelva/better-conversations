@@ -16,6 +16,19 @@ export async function getEngine(): Promise<ConversationEngine> {
     engine = betterConversation({
       adapter,
       audit: { store: createInMemoryAuditStore() },
+      security: {
+        requireAuth: false,
+        participantAccessControl: false,
+        allowListChatters: true,
+        allowListConversations: true,
+        allowListConversationsByEntity: true,
+        archiveRequiresPermission: false,
+        addParticipantRequiresRole: false,
+        removeParticipantRequiresRole: false,
+        setRoleRequiresAdmin: false,
+        grantRevokePermissionsRequiresAdmin: false,
+        policyWriteRequiresAdmin: false,
+      },
       plugins: [
         createSsePlugin(),
         createPresencePlugin(),

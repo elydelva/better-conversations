@@ -41,7 +41,15 @@ export type {
   StoredPolicy,
 } from "./adapter/index.js";
 
-export type { ConversationConfig, ConversationPlugin } from "./config/index.js";
+export {
+  getDefaultSecurityConfig,
+  mergeSecurityConfig,
+} from "./config/index.js";
+export type {
+  ConversationConfig,
+  ConversationPlugin,
+  SecurityConfig,
+} from "./config/index.js";
 
 export {
   getDefaultGlobal,

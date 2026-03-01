@@ -6,6 +6,7 @@ export type { ConversationClient } from "./types.js";
 export { queryKeys } from "./query-keys.js";
 export {
   useChatters,
+  useChatterConversations,
   useConversations,
   useConversation,
   useBlocks,

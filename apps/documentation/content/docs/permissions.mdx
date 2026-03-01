@@ -37,7 +37,15 @@ DELETE /chatters/:id/permissions/:action
 
 ## Usage
 
-Permissions are checked via the adapter's `PermissionAdapter`. The core does not enforce them automatically; you use them in hooks or custom logic:
+Permissions are checked via the adapter's `PermissionAdapter`. When [SecurityConfig](/docs/security) is used with restrictive defaults, the core enforces admin permissions for:
+
+- `admin:listChatters` — List all chatters
+- `admin:listConversations` — List all conversations or findByEntity
+- `admin:archive` — Archive a conversation
+- `admin:addParticipant` — Add a participant
+- `admin:setRole` — Change participant role
+- `admin:managePolicies` — Modify policies
+- `admin:grantPermissions` — Grant or revoke permissions
 
 ```ts title="example.ts"
 const hasPermission = await adapter.permissions.check(chatterId, "admin:archive", scope);

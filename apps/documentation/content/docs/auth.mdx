@@ -116,6 +116,7 @@ When auth is enabled:
 - **Policy** enforces what a chatter can do (send, edit, delete, rate limits) — see [Policy](/docs/policy).
 - **Auth** ensures the HTTP caller is the chatter performing the action.
 - **Permissions** handle admin/custom actions (archive, grant, etc.) — see [Permissions](/docs/permissions).
+- **SecurityConfig** controls participant access and admin permission checks — see [Security](/docs/security).
 
 The core applies `canEditOwnBlocks`, `editWindowSeconds`, `canDeleteOwnBlocks`, and blocks double-delete in `BlockService`. The `onBlockBeforeDelete` context includes `resolvedPolicy` and `authorCanDelete` for advanced use.
 
@@ -132,3 +133,5 @@ createNextHandler(conv, {
 ```
 
 When `requireAuth: true` and `getCurrentChatter` returns `null`, the handler returns 401 before dispatching.
+
+**Production recommendation:** Always use `requireAuth: true` and a real `getCurrentChatter` when deploying. The engine's `security.requireAuth` (default `true`) makes `requireAuthMatch` reject unauthenticated callers for sensitive handlers.

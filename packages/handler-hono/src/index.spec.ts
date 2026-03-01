@@ -172,8 +172,25 @@ function createMockContext(
   return { c, responses };
 }
 
+const permissiveSecurity = {
+  requireAuth: true,
+  participantAccessControl: false,
+  allowListChatters: true,
+  allowListConversations: true,
+  allowListConversationsByEntity: true,
+  archiveRequiresPermission: false,
+  addParticipantRequiresRole: false,
+  removeParticipantRequiresRole: false,
+  setRoleRequiresAdmin: false,
+  grantRevokePermissionsRequiresAdmin: false,
+  policyWriteRequiresAdmin: false,
+};
+
 describe("createHonoHandler", () => {
-  const engine = betterConversation({ adapter: createMockAdapter() });
+  const engine = betterConversation({
+    adapter: createMockAdapter(),
+    security: permissiveSecurity,
+  });
 
   test("returns handler function", () => {
     const handler = createHonoHandler(engine);

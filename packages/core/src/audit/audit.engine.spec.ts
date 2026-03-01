@@ -30,8 +30,15 @@ describe("audit merge hooks", () => {
         update: async () => chatter,
       },
       participants: {
-        list: async () => [],
-        find: async () => null,
+        list: async () => [
+          createMockParticipant({
+            conversationId: "conv_1",
+            chatterId: "chatter_1",
+            leftAt: null,
+          }),
+        ],
+        find: async () =>
+          createMockParticipant({ conversationId: "conv_1", chatterId: "chatter_1" }),
         add: async () => createMockParticipant(),
         update: async () => createMockParticipant(),
         remove: async () => {},

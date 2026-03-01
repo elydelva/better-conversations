@@ -1,4 +1,8 @@
-import type { ConversationConfig } from "./config/index.js";
+import {
+  type ConversationConfig,
+  type SecurityConfig,
+  mergeSecurityConfig,
+} from "./config/index.js";
 import type { Route } from "./handler/routes.js";
 import { buildRoutes } from "./handler/routes.js";
 import type { BlockAfterSendCtx } from "./hooks/BlockAfterSend.js";
@@ -35,10 +39,12 @@ export class ConversationEngine<
 
   private _initDone = false;
   private readonly _hooks: NonNullable<ConversationConfig<TBlocks, TRoles>["hooks"]>;
+  private readonly _security: Readonly<Required<SecurityConfig>>;
 
   constructor(private readonly config: ConversationConfig<TBlocks, TRoles>) {
     const { adapter, generateId } = config;
 
+    this._security = mergeSecurityConfig(config.security);
     this._hooks = this.mergeHooks();
     const hooks = this._hooks;
 
@@ -154,6 +160,10 @@ export class ConversationEngine<
     return this._hooks;
   }
 
+  getSecurityConfig(): Readonly<Required<SecurityConfig>> {
+    return this._security;
+  }
+
   /**
    * Returns schema config for CLI schema generation. Used by @better-conversation/cli.
    */
@@ -179,21 +189,27 @@ export class ConversationEngine<
     const { adapter, additionalBlocks, additionalRoles } = this.config;
     const { registries } = adapter;
 
-    for (const [type, def] of Object.entries(defaultBlockRegistry)) {
-      await registries.upsertBlock(type, schemaToJson(def.schema), true);
-    }
-    for (const [name, def] of Object.entries(defaultRoleRegistry)) {
-      await registries.upsertRole(name, def.extends ?? null, def.policy, true);
-    }
-    if (additionalBlocks) {
-      for (const [type, def] of Object.entries(additionalBlocks)) {
-        await registries.upsertBlock(type, schemaToJson(def.schema), false);
-      }
-    }
-    if (additionalRoles) {
-      for (const [, def] of Object.entries(additionalRoles)) {
-        await registries.upsertRole(def.name, def.extends ?? null, def.policy, false);
-      }
+    await Promise.all([
+      ...Object.entries(defaultBlockRegistry).map(([type, def]) =>
+        registries.upsertBlock(type, schemaToJson(def.schema), true)
+      ),
+      ...Object.entries(defaultRoleRegistry).map(([name, def]) =>
+        registries.upsertRole(name, def.extends ?? null, def.policy, true)
+      ),
+    ]);
+    if (additionalBlocks || additionalRoles) {
+      await Promise.all([
+        ...(additionalBlocks
+          ? Object.entries(additionalBlocks).map(([type, def]) =>
+              registries.upsertBlock(type, schemaToJson(def.schema), false)
+            )
+          : []),
+        ...(additionalRoles
+          ? Object.values(additionalRoles).map((def) =>
+              registries.upsertRole(def.name, def.extends ?? null, def.policy, false)
+            )
+          : []),
+      ]);
     }
     this._initDone = true;
   }

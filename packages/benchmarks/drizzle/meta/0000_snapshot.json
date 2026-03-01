@@ -138,12 +138,8 @@
           "name": "bc_blocks_conversation_id_bc_conversations_id_fk",
           "tableFrom": "bc_blocks",
           "tableTo": "bc_conversations",
-          "columnsFrom": [
-            "conversation_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["conversation_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -151,12 +147,8 @@
           "name": "bc_blocks_author_id_bc_chatters_id_fk",
           "tableFrom": "bc_blocks",
           "tableTo": "bc_chatters",
-          "columnsFrom": [
-            "author_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["author_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -211,12 +203,8 @@
           "name": "bc_chatter_permissions_chatter_id_bc_chatters_id_fk",
           "tableFrom": "bc_chatter_permissions",
           "tableTo": "bc_chatters",
-          "columnsFrom": [
-            "chatter_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["chatter_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -453,12 +441,8 @@
           "name": "bc_participants_conversation_id_bc_conversations_id_fk",
           "tableFrom": "bc_participants",
           "tableTo": "bc_conversations",
-          "columnsFrom": [
-            "conversation_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["conversation_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -466,12 +450,8 @@
           "name": "bc_participants_chatter_id_bc_chatters_id_fk",
           "tableFrom": "bc_participants",
           "tableTo": "bc_chatters",
-          "columnsFrom": [
-            "chatter_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["chatter_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -529,10 +509,7 @@
       "indexes": {
         "policies_level_scope_unique": {
           "name": "policies_level_scope_unique",
-          "columns": [
-            "level",
-            "scope_id"
-          ],
+          "columns": ["level", "scope_id"],
           "isUnique": true
         }
       },

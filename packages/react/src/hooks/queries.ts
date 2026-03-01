@@ -10,6 +10,21 @@ export function useChatters(params?: { limit?: number; cursor?: string }) {
   });
 }
 
+export function useChatterConversations(
+  chatterId: string | null,
+  params?: { limit?: number; cursor?: string }
+) {
+  const client = useConversationClient();
+  return useQuery({
+    queryKey: queryKeys.chatters.conversations(chatterId ?? "", params),
+    queryFn: () =>
+      chatterId
+        ? client.chatters.listConversations(chatterId, params?.limit, params?.cursor)
+        : Promise.reject(new Error("No chatter ID")),
+    enabled: !!chatterId,
+  });
+}
+
 export function useConversations(params?: {
   entityType?: string;
   entityId?: string;

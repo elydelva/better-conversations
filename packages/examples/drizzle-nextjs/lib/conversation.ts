@@ -9,7 +9,22 @@ import { db } from "./db";
 
 const adapter = drizzleAdapter(db, { provider: "sqlite" });
 
-export const conv = betterConversation({ adapter });
+export const conv = betterConversation({
+  adapter,
+  security: {
+    requireAuth: false,
+    participantAccessControl: false,
+    allowListChatters: true,
+    allowListConversations: true,
+    allowListConversationsByEntity: true,
+    archiveRequiresPermission: false,
+    addParticipantRequiresRole: false,
+    removeParticipantRequiresRole: false,
+    setRoleRequiresAdmin: false,
+    grantRevokePermissionsRequiresAdmin: false,
+    policyWriteRequiresAdmin: false,
+  },
+});
 
 let _initDone = false;
 

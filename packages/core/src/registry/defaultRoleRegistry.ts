@@ -26,6 +26,18 @@ export const defaultRoleRegistry: RoleRegistry = {
       maxThreadDepth: 1,
     },
   },
+  moderator: {
+    name: "moderator",
+    policy: {
+      allowedBlocks: "*",
+      maxBlocksPerMinute: 60,
+      editWindowSeconds: undefined,
+      canEditOwnBlocks: true,
+      canDeleteOwnBlocks: true,
+      threadsEnabled: true,
+      maxThreadDepth: 1,
+    },
+  },
   observer: {
     name: "observer",
     policy: {

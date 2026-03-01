@@ -201,7 +201,7 @@ describe("BlockService", () => {
     const readOnlyAdapter = {
       ...baseAdapter,
       participants: {
-        list: async () => [],
+        list: async () => [createMockParticipant({ chatterId: "chatter_1", role: "observer" })],
         find: async () => createMockParticipant({ role: "observer" }),
         add: async () => createMockParticipant(),
         update: async () => createMockParticipant(),
@@ -229,7 +229,7 @@ describe("BlockService", () => {
     const rateLimitAdapter = {
       ...baseAdapter,
       participants: {
-        list: async () => [],
+        list: async () => [createMockParticipant({ chatterId: "chatter_1", role: "member" })],
         find: async () => createMockParticipant({ role: "member" }),
         add: async () => createMockParticipant(),
         update: async () => createMockParticipant(),

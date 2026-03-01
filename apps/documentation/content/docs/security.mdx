@@ -1,0 +1,124 @@
+---
+title: Security Configuration
+description: SecurityConfig with restrictive defaults — participant access, admin permissions, configurable controls.
+---
+
+## Overview
+
+Better Conversations includes a configurable security layer with **restrictive defaults**. You pass `security` in the engine config to tune behavior.
+
+## SecurityConfig
+
+```ts
+import { betterConversation, getDefaultSecurityConfig } from "@better-conversation/core";
+
+const engine = betterConversation({
+  adapter,
+  security: {
+    requireAuth: true,
+    participantAccessControl: true,
+    allowListChatters: false,
+    allowListConversations: false,
+    // ...
+  },
+});
+```
+
+### Options
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `requireAuth` | `true` | Require auth for sensitive handlers; `requireAuthMatch` rejects when auth absent |
+| `participantAccessControl` | `true` | Restrict access to conversations/blocks/participants to participants only |
+| `allowListChatters` | `false` | If `false`, `GET /chatters` requires `admin:listChatters` permission |
+| `allowListConversations` | `false` | If `false`, `GET /conversations` requires `admin:listConversations` |
+| `allowListConversationsByEntity` | `false` | If `false`, `findByEntity` requires `admin:listConversations` |
+| `allowFindChatter` | `true` | If `false`, `GET /chatters/:id` would require permission (default: public) |
+| `archiveRequiresPermission` | `true` | Archive requires `admin:archive` or owner role |
+| `addParticipantRequiresRole` | `true` | Add participant requires owner/moderator or `admin:addParticipant` |
+| `removeParticipantRequiresRole` | `true` | Remove participant requires owner/moderator |
+| `setRoleRequiresAdmin` | `true` | Change role requires owner or `admin:setRole` |
+| `grantRevokePermissionsRequiresAdmin` | `true` | Grant/revoke permissions requires `admin:grantPermissions` |
+| `policyWriteRequiresAdmin` | `true` | Modify policies requires `admin:managePolicies` |
+
+## Admin Permissions
+
+When security controls are enabled, these permissions are checked:
+
+| Permission | Used for |
+|------------|----------|
+| `admin:listChatters` | `GET /chatters` |
+| `admin:listConversations` | `GET /conversations`, `findByEntity` |
+| `admin:archive` | Archive conversation |
+| `admin:addParticipant` | Add participant |
+| `admin:setRole` | Change participant role |
+| `admin:managePolicies` | Set global, role, conversation, thread policies |
+| `admin:grantPermissions` | Grant/revoke permissions |
+
+Grant them via `POST /chatters/:id/permissions`:
+
+```ts
+await client.permissions.grant(chatterId, { action: "admin:listChatters" });
+```
+
+## Restrictive vs Permissive
+
+**Restrictive (default)** — Suitable for production. Participants see only their conversations; admin actions require permissions.
+
+```ts
+// Explicit restrictive (same as default)
+security: {
+  requireAuth: true,
+  participantAccessControl: true,
+  allowListChatters: false,
+  allowListConversations: false,
+  archiveRequiresPermission: true,
+  addParticipantRequiresRole: true,
+  removeParticipantRequiresRole: true,
+  setRoleRequiresAdmin: true,
+  grantRevokePermissionsRequiresAdmin: true,
+  policyWriteRequiresAdmin: true,
+}
+```
+
+**Permissive** — For playground or development. Use with `requireAuth: false` when bootstrap is needed.
+
+```ts
+security: {
+  requireAuth: false,
+  participantAccessControl: false,
+  allowListChatters: true,
+  allowListConversations: true,
+  allowListConversationsByEntity: true,
+  archiveRequiresPermission: false,
+  addParticipantRequiresRole: false,
+  removeParticipantRequiresRole: false,
+  setRoleRequiresAdmin: false,
+  grantRevokePermissionsRequiresAdmin: false,
+  policyWriteRequiresAdmin: false,
+}
+```
+
+## Handler Security Matrix
+
+| Handler | participantAccessControl | Permission / Role |
+|---------|--------------------------|-------------------|
+| `GET /conversations/:id` | Participant | — |
+| `GET /conversations/:id/participants` | Participant | — |
+| `GET /conversations/:id/blocks` | Participant | — |
+| `DELETE /conversations/:id` (archive) | — | owner or `admin:archive` |
+| `POST /conversations/:id/participants` | — | owner/moderator or `admin:addParticipant` |
+| `DELETE /conversations/:id/participants/:chatterId` | — | owner/moderator |
+| `PATCH /conversations/:id/participants/:chatterId` | — | owner or `admin:setRole` |
+| `GET /chatters` | — | `admin:listChatters` |
+| `GET /conversations` | — | `admin:listConversations` |
+| `PATCH /policies/*` | — | `admin:managePolicies` |
+| `POST/DELETE /chatters/:id/permissions` | — | `admin:grantPermissions` |
+
+## Migration
+
+Existing apps without `security` config get **restrictive defaults**. To preserve previous behavior:
+
+1. Add `security` with permissive values.
+2. Ensure `getCurrentChatter` and `requireAuth: true` in your handler when using restrictive mode.
+3. Use `client.chatters.listConversations(chatterId)` instead of `client.conversations.list()` for chatter-scoped lists.

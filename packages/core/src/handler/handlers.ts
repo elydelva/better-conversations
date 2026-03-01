@@ -2,7 +2,6 @@ import {
   ChatterNotFoundError,
   ConversationNotFoundError,
   ParticipantNotFoundError,
-  PermissionDeniedError,
   PolicyNotImplementedError,
 } from "@better-conversation/errors";
 import {
@@ -19,20 +18,15 @@ import {
   policySetSchema,
 } from "@better-conversation/schema";
 import type { ConversationEngine } from "../engine.js";
-import type { CoreRequest, RouteHandler } from "./types.js";
+import {
+  requireAuth,
+  requireAuthMatch,
+  requireParticipant,
+  requirePermission,
+  requireRole,
+} from "./securityHelpers.js";
+import type { RouteHandler } from "./types.js";
 import { parseLimit, successResponse } from "./utils.js";
-
-function requireAuth(req: CoreRequest): void {
-  if (!req.auth?.chatterId) {
-    throw new PermissionDeniedError("authentication_required");
-  }
-}
-
-function requireAuthMatch(req: CoreRequest, expectedChatterId: string): void {
-  if (req.auth && req.auth.chatterId !== expectedChatterId) {
-    throw new PermissionDeniedError("caller_must_match_actor", expectedChatterId);
-  }
-}
 
 export const handleChattersCreate: RouteHandler = async ({ engine, req }) => {
   const data = parseBody(req, chatterCreateSchema);
@@ -56,12 +50,18 @@ export const handleChattersFind: RouteHandler = async ({ engine, req }) => {
 
 export const handleChattersUpdate: RouteHandler = async ({ engine, req }) => {
   const id = req.params.id;
+  requireAuthMatch(engine, req, id);
   const data = parseBody(req, chatterUpdateSchema);
   const chatter = await engine.chatters.update(id, data);
   return successResponse(chatter);
 };
 
 export const handleChattersList: RouteHandler = async ({ engine, req }) => {
+  const security = engine.getSecurityConfig();
+  if (!security.allowListChatters) {
+    requireAuth(engine, req);
+    await requirePermission(engine, req, "admin:listChatters");
+  }
   const limit = parseLimit(req.query.limit, 50);
   const cursor = req.query.cursor;
   const result = await engine.chatters.list({ limit, cursor });
@@ -70,7 +70,7 @@ export const handleChattersList: RouteHandler = async ({ engine, req }) => {
 
 export const handleChatterConversations: RouteHandler = async ({ engine, req }) => {
   const chatterId = req.params.id;
-  requireAuthMatch(req, chatterId);
+  requireAuthMatch(engine, req, chatterId);
   const limit = parseLimit(req.query.limit, 50);
   const cursor = req.query.cursor;
   const result = await engine.conversations.list({
@@ -83,7 +83,7 @@ export const handleChatterConversations: RouteHandler = async ({ engine, req }) 
 
 export const handleConversationsCreate: RouteHandler = async ({ engine, req }) => {
   const data = parseBody(req, conversationCreateSchema);
-  requireAuthMatch(req, data.createdBy);
+  requireAuthMatch(engine, req, data.createdBy);
   const conv = await engine.conversations.create({
     title: data.title ?? null,
     status: (data.status as "open" | "archived" | "locked") ?? "open",
@@ -93,19 +93,25 @@ export const handleConversationsCreate: RouteHandler = async ({ engine, req }) =
     metadata: data.metadata ?? null,
   });
   if (data.participants?.length) {
-    for (const p of data.participants) {
-      await engine.participants.add({
-        conversationId: conv.id,
-        chatterId: p.chatterId,
-        role: p.role,
-      });
-    }
+    await Promise.all(
+      data.participants.map((p) =>
+        engine.participants.add({
+          conversationId: conv.id,
+          chatterId: p.chatterId,
+          role: p.role,
+        })
+      )
+    );
   }
   return successResponse(conv, 201);
 };
 
 export const handleConversationsFind: RouteHandler = async ({ engine, req }) => {
   const id = req.params.id;
+  const security = engine.getSecurityConfig();
+  if (security.participantAccessControl) {
+    await requireParticipant(engine, req, id);
+  }
   const conv = await engine.conversations.find(id);
   if (!conv) {
     throw new ConversationNotFoundError(id);
@@ -115,6 +121,10 @@ export const handleConversationsFind: RouteHandler = async ({ engine, req }) => 
 
 export const handleConversationsUpdate: RouteHandler = async ({ engine, req }) => {
   const id = req.params.id;
+  const security = engine.getSecurityConfig();
+  if (security.participantAccessControl) {
+    await requireParticipant(engine, req, id);
+  }
   const data = parseBody(req, conversationUpdateSchema);
   const conv = await engine.conversations.update(id, data);
   return successResponse(conv);
@@ -122,6 +132,15 @@ export const handleConversationsUpdate: RouteHandler = async ({ engine, req }) =
 
 export const handleConversationsArchive: RouteHandler = async ({ engine, req }) => {
   const id = req.params.id;
+  const security = engine.getSecurityConfig();
+  if (security.archiveRequiresPermission) {
+    requireAuth(engine, req);
+    const callerChatterId = req.auth?.chatterId ?? "";
+    const hasAdminArchive = await engine.permissions.check(callerChatterId, "admin:archive");
+    if (!hasAdminArchive) {
+      await requireRole(engine, req, id, ["owner"]);
+    }
+  }
   await engine.conversations.archive(id);
   return successResponse(null, 204);
 };
@@ -129,9 +148,18 @@ export const handleConversationsArchive: RouteHandler = async ({ engine, req }) 
 export const handleConversationsListOrFindByEntity: RouteHandler = async ({ engine, req }) => {
   const entityType = req.query.entityType;
   const entityId = req.query.entityId;
+  const security = engine.getSecurityConfig();
   if (entityType && entityId) {
+    if (!security.allowListConversationsByEntity) {
+      requireAuth(engine, req);
+      await requirePermission(engine, req, "admin:listConversations");
+    }
     const convs = await engine.conversations.findByEntity(entityType, entityId);
     return successResponse(convs);
+  }
+  if (!security.allowListConversations) {
+    requireAuth(engine, req);
+    await requirePermission(engine, req, "admin:listConversations");
   }
   const limit = parseLimit(req.query.limit, 50);
   const result = await engine.conversations.list({
@@ -146,12 +174,27 @@ export const handleConversationsListOrFindByEntity: RouteHandler = async ({ engi
 
 export const handleParticipantsList: RouteHandler = async ({ engine, req }) => {
   const conversationId = req.params.id;
+  const security = engine.getSecurityConfig();
+  if (security.participantAccessControl) {
+    await requireParticipant(engine, req, conversationId);
+  }
   const participants = await engine.participants.list(conversationId);
   return successResponse(participants);
 };
 
 export const handleParticipantsAdd: RouteHandler = async ({ engine, req }) => {
   const conversationId = req.params.id;
+  const security = engine.getSecurityConfig();
+  if (security.addParticipantRequiresRole) {
+    const hasAdminAdd = await engine.permissions.check(
+      req.auth?.chatterId ?? "",
+      "admin:addParticipant"
+    );
+    if (!hasAdminAdd) {
+      requireAuth(engine, req);
+      await requireRole(engine, req, conversationId, ["owner", "moderator"]);
+    }
+  }
   const data = parseBody(req, participantAddSchema);
   const participant = await engine.participants.add({
     conversationId,
@@ -160,9 +203,11 @@ export const handleParticipantsAdd: RouteHandler = async ({ engine, req }) => {
   });
   const hooks = engine.getHooks();
   if (hooks?.onParticipantAfterJoin) {
-    const conversation = await engine.conversations.find(conversationId);
-    const chatter = await engine.chatters.find(data.chatterId);
-    const participants = await engine.participants.list(conversationId);
+    const [conversation, chatter, participants] = await Promise.all([
+      engine.conversations.find(conversationId),
+      engine.chatters.find(data.chatterId),
+      engine.participants.list(conversationId),
+    ]);
     if (conversation && chatter) {
       await hooks.onParticipantAfterJoin({
         conversation,
@@ -180,6 +225,10 @@ export const handleParticipantsAdd: RouteHandler = async ({ engine, req }) => {
 export const handleParticipantsRemove: RouteHandler = async ({ engine, req }) => {
   const conversationId = req.params.id;
   const chatterId = req.params.chatterId;
+  const security = engine.getSecurityConfig();
+  if (security.removeParticipantRequiresRole) {
+    await requireRole(engine, req, conversationId, ["owner", "moderator"]);
+  }
   const participant = await engine.participants.find(conversationId, chatterId);
   if (!participant) {
     throw new ParticipantNotFoundError(conversationId, chatterId);
@@ -191,6 +240,14 @@ export const handleParticipantsRemove: RouteHandler = async ({ engine, req }) =>
 export const handleParticipantsSetRole: RouteHandler = async ({ engine, req }) => {
   const conversationId = req.params.id;
   const chatterId = req.params.chatterId;
+  const security = engine.getSecurityConfig();
+  if (security.setRoleRequiresAdmin) {
+    const hasAdminSet = await engine.permissions.check(req.auth?.chatterId ?? "", "admin:setRole");
+    if (!hasAdminSet) {
+      requireAuth(engine, req);
+      await requireRole(engine, req, conversationId, ["owner"]);
+    }
+  }
   const data = parseBody(req, participantSetRoleSchema);
   const participant = await engine.participants.setRole(conversationId, chatterId, data.role);
   return successResponse(participant);
@@ -198,6 +255,10 @@ export const handleParticipantsSetRole: RouteHandler = async ({ engine, req }) =
 
 export const handleBlocksList: RouteHandler = async ({ engine, req }) => {
   const conversationId = req.params.id;
+  const security = engine.getSecurityConfig();
+  if (security.participantAccessControl) {
+    await requireParticipant(engine, req, conversationId);
+  }
   const limit = parseLimit(req.query.limit, 50);
   const beforeRaw = req.query.before;
   const afterRaw = req.query.after;
@@ -217,7 +278,7 @@ export const handleBlocksList: RouteHandler = async ({ engine, req }) => {
 export const handleBlocksSend: RouteHandler = async ({ engine, req }) => {
   const conversationId = req.params.id;
   const data = parseBody(req, blockSendSchema);
-  requireAuthMatch(req, data.authorId);
+  requireAuthMatch(engine, req, data.authorId);
   const block = await engine.blocks.send({
     conversationId,
     authorId: data.authorId,
@@ -234,7 +295,7 @@ export const handleBlocksUpdateMeta: RouteHandler = async ({ engine, req }) => {
   const data = parseBody(req, blockUpdateMetaSchema);
   const existing = await engine.blocks.find(blockId);
   if (existing) {
-    requireAuthMatch(req, existing.authorId);
+    requireAuthMatch(engine, req, existing.authorId);
   }
   const block = await engine.blocks.updateMeta(blockId, data);
   return successResponse(block);
@@ -244,7 +305,7 @@ export const handleBlocksDelete: RouteHandler = async ({ engine, req }) => {
   const blockId = req.params.blockId;
   const block = await engine.blocks.find(blockId);
   if (block) {
-    requireAuthMatch(req, block.authorId);
+    requireAuthMatch(engine, req, block.authorId);
   }
   await engine.blocks.delete(blockId);
   return successResponse(null, 204);
@@ -256,7 +317,11 @@ export const handlePoliciesGetGlobal: RouteHandler = async ({ engine }) => {
 };
 
 export const handlePoliciesSetGlobal: RouteHandler = async ({ engine, req }) => {
-  requireAuth(req);
+  requireAuth(engine, req);
+  const security = engine.getSecurityConfig();
+  if (security.policyWriteRequiresAdmin) {
+    await requirePermission(engine, req, "admin:managePolicies");
+  }
   const data = parseBody(req, policySetSchema);
   await engine.policies.setGlobal(data);
   return successResponse(null, 204);
@@ -268,7 +333,11 @@ export const handlePoliciesListRoles: RouteHandler = async ({ engine }) => {
 };
 
 export const handlePoliciesSetRole: RouteHandler = async ({ engine, req }) => {
-  requireAuth(req);
+  requireAuth(engine, req);
+  const security = engine.getSecurityConfig();
+  if (security.policyWriteRequiresAdmin) {
+    await requirePermission(engine, req, "admin:managePolicies");
+  }
   const role = req.params.role;
   const data = parseBody(req, policySetSchema);
   await engine.policies.setRole(role, data);
@@ -277,7 +346,7 @@ export const handlePoliciesSetRole: RouteHandler = async ({ engine, req }) => {
 
 export const handlePoliciesResolve: RouteHandler = async ({ engine, req }) => {
   const chatterId = req.params.chatterId;
-  requireAuthMatch(req, chatterId);
+  requireAuthMatch(engine, req, chatterId);
   const conversationId = req.query.conversationId;
   const threadParentBlockId = req.query.threadParentBlockId;
   const resolved = await engine.policies.resolve(chatterId, conversationId, threadParentBlockId);
@@ -286,14 +355,27 @@ export const handlePoliciesResolve: RouteHandler = async ({ engine, req }) => {
 
 export const handlePoliciesSetChatter: RouteHandler = async ({ engine, req }) => {
   const chatterId = req.params.chatterId;
-  requireAuthMatch(req, chatterId);
+  const security = engine.getSecurityConfig();
+  if (security.policyWriteRequiresAdmin) {
+    requireAuth(engine, req);
+    const callerId = req.auth?.chatterId;
+    if (!callerId || callerId !== chatterId) {
+      await requirePermission(engine, req, "admin:managePolicies");
+    }
+  } else {
+    requireAuthMatch(engine, req, chatterId);
+  }
   const data = parseBody(req, policySetSchema);
   await engine.policies.setChatter(chatterId, data);
   return successResponse(null, 204);
 };
 
 export const handlePoliciesSetConversation: RouteHandler = async ({ engine, req }) => {
-  requireAuth(req);
+  requireAuth(engine, req);
+  const security = engine.getSecurityConfig();
+  if (security.policyWriteRequiresAdmin) {
+    await requirePermission(engine, req, "admin:managePolicies");
+  }
   const conversationId = req.params.id;
   const data = parseBody(req, policySetSchema);
   await engine.policies.setConversation(conversationId, data);
@@ -301,7 +383,11 @@ export const handlePoliciesSetConversation: RouteHandler = async ({ engine, req 
 };
 
 export const handlePoliciesSetThread: RouteHandler = async ({ engine, req }) => {
-  requireAuth(req);
+  requireAuth(engine, req);
+  const security = engine.getSecurityConfig();
+  if (security.policyWriteRequiresAdmin) {
+    await requirePermission(engine, req, "admin:managePolicies");
+  }
   const conversationId = req.params.id;
   const blockId = req.params.blockId;
   const data = parseBody(req, policySetSchema);
@@ -314,7 +400,11 @@ export const handlePermissionsList: RouteHandler = async () => {
 };
 
 export const handlePermissionsGrant: RouteHandler = async ({ engine, req }) => {
-  requireAuth(req);
+  requireAuth(engine, req);
+  const security = engine.getSecurityConfig();
+  if (security.grantRevokePermissionsRequiresAdmin) {
+    await requirePermission(engine, req, "admin:grantPermissions");
+  }
   const chatterId = req.params.id;
   const data = parseBody(req, permissionGrantSchema);
   await engine.permissions.grant(chatterId, data.action, data.scope);
@@ -322,7 +412,11 @@ export const handlePermissionsGrant: RouteHandler = async ({ engine, req }) => {
 };
 
 export const handlePermissionsRevoke: RouteHandler = async ({ engine, req }) => {
-  requireAuth(req);
+  requireAuth(engine, req);
+  const security = engine.getSecurityConfig();
+  if (security.grantRevokePermissionsRequiresAdmin) {
+    await requirePermission(engine, req, "admin:grantPermissions");
+  }
   const chatterId = req.params.id;
   const action = req.params.action;
   await engine.permissions.revoke(chatterId, action);

@@ -24,7 +24,7 @@ import {
 import { useActiveChatter } from "@/contexts/chatter-context";
 import { convClient } from "@/lib/conversation-client";
 import type { Conversation } from "@better-conversation/core";
-import { useConversations, useCreateConversation } from "@better-conversation/react";
+import { useChatterConversations, useCreateConversation } from "@better-conversation/react";
 import { Archive, MessageCircle, Plus } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
@@ -32,7 +32,10 @@ import { toast } from "sonner";
 
 export default function ConversationsPage() {
   const { activeChatter } = useActiveChatter();
-  const { data: conversationsData, isLoading: loading } = useConversations({ limit: 100 });
+  const { data: conversationsData, isLoading: loading } = useChatterConversations(
+    activeChatter?.id ?? null,
+    { limit: 100 }
+  );
   const conversations = conversationsData?.items ?? [];
   const createConversation = useCreateConversation();
   const [createOpen, setCreateOpen] = useState(false);

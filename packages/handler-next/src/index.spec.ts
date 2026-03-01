@@ -138,8 +138,25 @@ async function createRequest(
   });
 }
 
+const permissiveSecurity = {
+  requireAuth: false,
+  participantAccessControl: false,
+  allowListChatters: true,
+  allowListConversations: true,
+  allowListConversationsByEntity: true,
+  archiveRequiresPermission: false,
+  addParticipantRequiresRole: false,
+  removeParticipantRequiresRole: false,
+  setRoleRequiresAdmin: false,
+  grantRevokePermissionsRequiresAdmin: false,
+  policyWriteRequiresAdmin: false,
+};
+
 describe("createNextHandler", () => {
-  const engine = betterConversation({ adapter: createFullMockAdapter() });
+  const engine = betterConversation({
+    adapter: createFullMockAdapter(),
+    security: permissiveSecurity,
+  });
 
   test("returns GET, POST, PATCH, DELETE handlers", () => {
     const handler = createNextHandler(engine);
@@ -224,7 +241,9 @@ describe("createNextHandler", () => {
     });
 
     test("GET /policies/chatters/:chatterId returns resolved policy", async () => {
-      const handler = createNextHandler(engine);
+      const handler = createNextHandler(engine, {
+        getCurrentChatter: () => "ch1",
+      });
       const req = await createRequest("http://localhost/policies/chatters/ch1");
       const res = await handler.GET(req);
       expect(res.status).toBe(200);
