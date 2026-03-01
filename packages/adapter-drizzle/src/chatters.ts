@@ -1,7 +1,7 @@
 import type { Chatter, ChatterAdapter, ChatterInput } from "@better-conversation/core";
 import { and, eq } from "drizzle-orm";
-import type { DrizzleAdapterContext } from "./shared.js";
-import { val } from "./shared.js";
+import type { DrizzleAdapterContext } from "./shared";
+import { val } from "./shared";
 
 function mapRowToChatter(row: Record<string, unknown>): Chatter {
   const r = row;

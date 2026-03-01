@@ -1,6 +1,6 @@
 import type { PermissionAdapter } from "@better-conversation/core";
 import { and, eq, isNull } from "drizzle-orm";
-import type { DrizzleAdapterContext } from "./shared.js";
+import type { DrizzleAdapterContext } from "./shared";
 
 export function createPermissionsAdapter(ctx: DrizzleAdapterContext): PermissionAdapter {
   const { db, schema, helpers } = ctx;

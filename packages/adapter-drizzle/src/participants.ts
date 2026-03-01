@@ -1,7 +1,7 @@
 import type { Participant, ParticipantAdapter, ParticipantInput } from "@better-conversation/core";
 import { and, eq } from "drizzle-orm";
-import type { DrizzleAdapterContext } from "./shared.js";
-import { toDate, val } from "./shared.js";
+import type { DrizzleAdapterContext } from "./shared";
+import { toDate, val } from "./shared";
 
 function mapRowToParticipant(row: Record<string, unknown>): Participant {
   const r = row;

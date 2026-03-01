@@ -5,7 +5,7 @@ import type {
   StoredPolicy,
 } from "@better-conversation/core";
 import { and, eq } from "drizzle-orm";
-import type { DrizzleAdapterContext } from "./shared.js";
+import type { DrizzleAdapterContext } from "./shared";
 
 function mapRowToStoredPolicy(
   row: Record<string, unknown>,

@@ -4,14 +4,17 @@
  */
 /* biome-ignore lint/suspicious/noExplicitAny: Drizzle fluent API requires untyped chain */
 import type { createAdapterHelpers } from "@better-conversation/core";
-import type { createSchema } from "./schema.js";
+import type { createSchema } from "./schema";
+import type { createSchemaSqlite } from "./schema.sqlite";
 
 /* biome-ignore lint/suspicious/noExplicitAny: Drizzle fluent API requires untyped chain */
 export type DrizzleDb = any;
 
+export type DrizzleSchema = ReturnType<typeof createSchema> | ReturnType<typeof createSchemaSqlite>;
+
 export interface DrizzleAdapterContext {
   db: DrizzleDb;
-  schema: ReturnType<typeof createSchema>;
+  schema: DrizzleSchema;
   helpers: ReturnType<typeof createAdapterHelpers>;
 }
 

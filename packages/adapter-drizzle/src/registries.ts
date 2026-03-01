@@ -1,5 +1,5 @@
 import type { PolicyObject, RegistryAdapter } from "@better-conversation/core";
-import type { DrizzleAdapterContext } from "./shared.js";
+import type { DrizzleAdapterContext } from "./shared";
 
 export function createRegistriesAdapter(ctx: DrizzleAdapterContext): RegistryAdapter {
   const { db, schema } = ctx;

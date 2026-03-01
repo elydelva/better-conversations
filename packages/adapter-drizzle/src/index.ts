@@ -1,14 +1,15 @@
 import { createAdapterHelpers } from "@better-conversation/core";
 import type { DatabaseAdapter } from "@better-conversation/core";
-import { createBlocksAdapter } from "./blocks.js";
-import { createChattersAdapter } from "./chatters.js";
-import { createConversationsAdapter } from "./conversations.js";
-import { createParticipantsAdapter } from "./participants.js";
-import { createPermissionsAdapter } from "./permissions.js";
-import { createPoliciesAdapter } from "./policies.js";
-import { createRegistriesAdapter } from "./registries.js";
-import { createSchema } from "./schema.js";
-import type { DrizzleAdapterContext } from "./shared.js";
+import { createBlocksAdapter } from "./blocks";
+import { createChattersAdapter } from "./chatters";
+import { createConversationsAdapter } from "./conversations";
+import { createParticipantsAdapter } from "./participants";
+import { createPermissionsAdapter } from "./permissions";
+import { createPoliciesAdapter } from "./policies";
+import { createRegistriesAdapter } from "./registries";
+import { createSchema } from "./schema";
+import { createSchemaSqlite } from "./schema.sqlite";
+import type { DrizzleAdapterContext } from "./shared";
 
 export interface DrizzleAdapterOptions {
   provider?: "pg" | "sqlite" | "mysql";
@@ -21,11 +22,12 @@ export function drizzleAdapter(
   options?: DrizzleAdapterOptions
 ): DatabaseAdapter {
   const prefix = options?.tablePrefix ?? "bc_";
+  const provider = options?.provider ?? "pg";
   const helpers = createAdapterHelpers({
     tablePrefix: prefix,
     generateId: options?.generateId,
   });
-  const schema = createSchema(prefix);
+  const schema = provider === "sqlite" ? createSchemaSqlite(prefix) : createSchema(prefix);
 
   const ctx: DrizzleAdapterContext = { db, schema, helpers };
 
@@ -40,4 +42,5 @@ export function drizzleAdapter(
   };
 }
 
-export { createSchema } from "./schema.js";
+export { createSchema } from "./schema";
+export { createSchemaSqlite } from "./schema.sqlite";

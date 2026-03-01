@@ -1,7 +1,7 @@
 import type { Block, BlockAdapter, BlockFilters, BlockInput } from "@better-conversation/core";
-import { and, desc, eq, gte } from "drizzle-orm";
-import type { DrizzleAdapterContext } from "./shared.js";
-import { toDate, val } from "./shared.js";
+import { and, desc, eq, gte, lt } from "drizzle-orm";
+import type { DrizzleAdapterContext } from "./shared";
+import { toDate, val } from "./shared";
 
 function mapRowToBlock(row: Record<string, unknown>): Block {
   const r = row;
@@ -44,6 +44,7 @@ export function createBlocksAdapter(ctx: DrizzleAdapterContext): BlockAdapter {
       if (filters.threadParentId != null)
         conditions.push(eq(blocks.threadParentId, filters.threadParentId));
       if (filters.after) conditions.push(gte(blocks.createdAt, filters.after));
+      if (filters.before) conditions.push(lt(blocks.createdAt, filters.before));
       const limit = filters.limit ?? 50;
       const result = await db
         .select()

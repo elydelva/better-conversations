@@ -5,8 +5,8 @@ import type {
   ConversationInput,
 } from "@better-conversation/core";
 import { and, desc, eq, inArray } from "drizzle-orm";
-import type { DrizzleAdapterContext } from "./shared.js";
-import { val } from "./shared.js";
+import type { DrizzleAdapterContext } from "./shared";
+import { val } from "./shared";
 
 function mapRowToConversation(row: Record<string, unknown>): Conversation {
   const r = row;
