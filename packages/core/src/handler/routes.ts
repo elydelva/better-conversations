@@ -16,6 +16,7 @@ import {
   handleParticipantsList,
   handleParticipantsMarkRead,
   handleParticipantsRemove,
+  handleParticipantsSetRole,
   handlePermissionsGrant,
   handlePermissionsList,
   handlePermissionsRevoke,
@@ -49,6 +50,11 @@ export const routes: Route[] = [
     method: "PATCH",
     path: "/conversations/:id/participants/:chatterId/read",
     handler: handleParticipantsMarkRead,
+  },
+  {
+    method: "PATCH",
+    path: "/conversations/:id/participants/:chatterId",
+    handler: handleParticipantsSetRole,
   },
   {
     method: "DELETE",

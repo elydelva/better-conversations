@@ -2,6 +2,7 @@ import {
   ChatterNotFoundError,
   ConversationNotFoundError,
   ParticipantNotFoundError,
+  ParticipantValidationError,
   PolicyNotImplementedError,
 } from "@better-conversation/errors";
 import type { ConversationEngine } from "../engine.js";
@@ -174,6 +175,17 @@ export const handleParticipantsMarkRead: RouteHandler = async ({ engine, req }) 
   const conversationId = req.params.id;
   const chatterId = req.params.chatterId;
   const participant = await engine.participants.markRead(conversationId, chatterId);
+  return successResponse(participant);
+};
+
+export const handleParticipantsSetRole: RouteHandler = async ({ engine, req }) => {
+  const conversationId = req.params.id;
+  const chatterId = req.params.chatterId;
+  const data = body<{ role: string }>(req);
+  if (!data.role || typeof data.role !== "string") {
+    throw new ParticipantValidationError("role is required");
+  }
+  const participant = await engine.participants.setRole(conversationId, chatterId, data.role);
   return successResponse(participant);
 };
 

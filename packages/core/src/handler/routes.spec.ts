@@ -17,6 +17,12 @@ describe("findRoute", () => {
     expect(result?.params).toEqual({ id: "conv-123" });
   });
 
+  test("matches PATCH /conversations/:id/participants/:chatterId", () => {
+    const result = findRoute("PATCH", "/conversations/conv_1/participants/chatter_1");
+    expect(result).not.toBeNull();
+    expect(result?.params).toEqual({ id: "conv_1", chatterId: "chatter_1" });
+  });
+
   test("returns null for unknown path", () => {
     const result = findRoute("GET", "/unknown/resource");
     expect(result).toBeNull();

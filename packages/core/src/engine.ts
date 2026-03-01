@@ -35,7 +35,10 @@ export class ConversationEngine<
 
     this.chatters = new ChatterService(adapter.chatters);
     this.conversations = new ConversationService(adapter.conversations);
-    this.participants = new ParticipantService(adapter.participants);
+    this.participants = new ParticipantService({
+      participants: adapter.participants,
+      roleRegistry: { ...defaultRoleRegistry, ...config.additionalRoles },
+    });
     this.policies = new PolicyService({
       adapter,
       policiesConfig: config.policies,

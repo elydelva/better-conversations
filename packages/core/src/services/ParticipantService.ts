@@ -1,12 +1,30 @@
 import {
   ParticipantAlreadyJoinedError,
   ParticipantNotFoundError,
+  ParticipantValidationError,
 } from "@better-conversation/errors";
 import type { ParticipantAdapter } from "../adapter/index.js";
+import type { RoleRegistry } from "../registry/index.js";
 import type { Participant, ParticipantInput } from "../types/index.js";
 
+export interface ParticipantServiceConfig {
+  participants: ParticipantAdapter;
+  roleRegistry?: RoleRegistry;
+}
+
 export class ParticipantService {
-  constructor(private readonly participants: ParticipantAdapter) {}
+  constructor(private readonly config: ParticipantAdapter | ParticipantServiceConfig) {
+    this._participants =
+      "participants" in config ? config.participants : (config as ParticipantAdapter);
+    this._roleRegistry = "roleRegistry" in config ? config.roleRegistry : undefined;
+  }
+
+  private readonly _participants: ParticipantAdapter;
+  private readonly _roleRegistry?: RoleRegistry;
+
+  private get participants() {
+    return this._participants;
+  }
 
   async list(conversationId: string): Promise<Participant[]> {
     return this.participants.list(conversationId);
@@ -33,6 +51,9 @@ export class ParticipantService {
   }
 
   async setRole(conversationId: string, chatterId: string, role: string): Promise<Participant> {
+    if (this._roleRegistry && !(role in this._roleRegistry)) {
+      throw new ParticipantValidationError(`Role "${role}" is not registered`);
+    }
     const participant = await this.participants.find(conversationId, chatterId);
     if (!participant) {
       throw new ParticipantNotFoundError(conversationId, chatterId);

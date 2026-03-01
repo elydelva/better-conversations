@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import {
   ParticipantAlreadyJoinedError,
   ParticipantNotFoundError,
+  ParticipantValidationError,
 } from "@better-conversation/errors";
 import { createMockAdapter, createMockParticipant } from "../fixtures/index.js";
 import { ParticipantService } from "./ParticipantService.js";
@@ -82,6 +83,24 @@ describe("ParticipantService", () => {
 
     await expect(service.setRole("conv_1", "chatter_missing", "member")).rejects.toThrow(
       ParticipantNotFoundError
+    );
+  });
+
+  test("setRole throws ParticipantValidationError when role not in registry", async () => {
+    const participants = {
+      find: async () => createMockParticipant(),
+      add: async () => createMockParticipant(),
+      update: async () => createMockParticipant(),
+      remove: async () => {},
+      list: async () => [],
+    };
+    const service = new ParticipantService({
+      participants,
+      roleRegistry: { member: { name: "member", policy: {} } },
+    });
+
+    await expect(service.setRole("conv_1", "chatter_1", "superadmin")).rejects.toThrow(
+      ParticipantValidationError
     );
   });
 
