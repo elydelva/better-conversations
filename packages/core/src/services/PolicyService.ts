@@ -96,4 +96,8 @@ export class PolicyService {
   async setThread(threadParentBlockId: string, policy: Partial<PolicyObject>): Promise<void> {
     await this.policyAdapter.upsert("thread", threadParentBlockId, policy as PolicyObject);
   }
+
+  listRoles(): string[] {
+    return Object.keys(this.config.roleRegistry);
+  }
 }

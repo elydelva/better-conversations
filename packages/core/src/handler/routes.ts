@@ -20,6 +20,14 @@ import {
   handlePermissionsGrant,
   handlePermissionsList,
   handlePermissionsRevoke,
+  handlePoliciesGetGlobal,
+  handlePoliciesListRoles,
+  handlePoliciesResolve,
+  handlePoliciesSetChatter,
+  handlePoliciesSetConversation,
+  handlePoliciesSetGlobal,
+  handlePoliciesSetRole,
+  handlePoliciesSetThread,
 } from "./handlers.js";
 import { matchPath } from "./path.js";
 import type { RouteHandler } from "./types.js";
@@ -95,6 +103,46 @@ export const routes: Route[] = [
     handler: handleConversationsArchive,
   },
 
+  {
+    method: "GET",
+    path: "/policies/chatters/:chatterId",
+    handler: handlePoliciesResolve,
+  },
+  {
+    method: "PATCH",
+    path: "/policies/chatters/:chatterId",
+    handler: handlePoliciesSetChatter,
+  },
+  {
+    method: "PATCH",
+    path: "/policies/conversations/:id",
+    handler: handlePoliciesSetConversation,
+  },
+  {
+    method: "PATCH",
+    path: "/policies/conversations/:id/threads/:blockId",
+    handler: handlePoliciesSetThread,
+  },
+  {
+    method: "GET",
+    path: "/policies/roles",
+    handler: handlePoliciesListRoles,
+  },
+  {
+    method: "PATCH",
+    path: "/policies/roles/:role",
+    handler: handlePoliciesSetRole,
+  },
+  {
+    method: "GET",
+    path: "/policies/global",
+    handler: handlePoliciesGetGlobal,
+  },
+  {
+    method: "PATCH",
+    path: "/policies/global",
+    handler: handlePoliciesSetGlobal,
+  },
   {
     method: "GET",
     path: "/chatters/:id/permissions",

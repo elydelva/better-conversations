@@ -236,6 +236,59 @@ export const handleBlocksDelete: RouteHandler = async ({ engine, req }) => {
   return successResponse(null, 204);
 };
 
+export const handlePoliciesGetGlobal: RouteHandler = async ({ engine }) => {
+  const resolved = await engine.policies.resolve("_global");
+  return successResponse(resolved);
+};
+
+export const handlePoliciesSetGlobal: RouteHandler = async ({ engine, req }) => {
+  const data = body<Record<string, unknown>>(req);
+  await engine.policies.setGlobal(data);
+  return successResponse(null, 204);
+};
+
+export const handlePoliciesListRoles: RouteHandler = async ({ engine }) => {
+  const roles = engine.policies.listRoles();
+  return successResponse({ roles });
+};
+
+export const handlePoliciesSetRole: RouteHandler = async ({ engine, req }) => {
+  const role = req.params.role;
+  const data = body<Record<string, unknown>>(req);
+  await engine.policies.setRole(role, data);
+  return successResponse(null, 204);
+};
+
+export const handlePoliciesResolve: RouteHandler = async ({ engine, req }) => {
+  const chatterId = req.params.chatterId;
+  const conversationId = req.query.conversationId;
+  const threadParentBlockId = req.query.threadParentBlockId;
+  const resolved = await engine.policies.resolve(chatterId, conversationId, threadParentBlockId);
+  return successResponse(resolved);
+};
+
+export const handlePoliciesSetChatter: RouteHandler = async ({ engine, req }) => {
+  const chatterId = req.params.chatterId;
+  const data = body<Record<string, unknown>>(req);
+  await engine.policies.setChatter(chatterId, data);
+  return successResponse(null, 204);
+};
+
+export const handlePoliciesSetConversation: RouteHandler = async ({ engine, req }) => {
+  const conversationId = req.params.id;
+  const data = body<Record<string, unknown>>(req);
+  await engine.policies.setConversation(conversationId, data);
+  return successResponse(null, 204);
+};
+
+export const handlePoliciesSetThread: RouteHandler = async ({ engine, req }) => {
+  const conversationId = req.params.id;
+  const blockId = req.params.blockId;
+  const data = body<Record<string, unknown>>(req);
+  await engine.policies.setThread(blockId, data);
+  return successResponse(null, 204);
+};
+
 export const handlePermissionsList: RouteHandler = async () => {
   throw new PolicyNotImplementedError("permissions.list");
 };

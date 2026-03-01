@@ -49,6 +49,22 @@ describe("dispatch", () => {
     });
   });
 
+  test("GET /policies/roles returns role list", async () => {
+    const engine = betterConversation({ adapter: createMockAdapter() });
+    const req = {
+      method: "GET",
+      path: "/policies/roles",
+      params: {},
+      query: {},
+      body: null,
+    };
+    const res = await dispatch(engine, req);
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty("roles");
+    expect(Array.isArray((res.body as { roles: string[] }).roles)).toBe(true);
+    expect((res.body as { roles: string[] }).roles).toContain("member");
+  });
+
   test("strips basePath before matching", async () => {
     const adapter = createMockAdapter({
       conversations: {
