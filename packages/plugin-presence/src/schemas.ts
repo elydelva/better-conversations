@@ -27,6 +27,12 @@ export function parseTypingBody(body: unknown): { untilMs: number } {
     }));
     throw new ValidationError(result.error.message, { metadata: { issues } });
   }
-  const untilMs = Math.min(Math.max(result.data.until ?? 5000, 1), 30000);
+  const rawUntil = result.data.until ?? 5000;
+  if (!Number.isFinite(rawUntil)) {
+    throw new ValidationError("until must be a valid number between 1 and 30000", {
+      metadata: { issues: [{ message: "Invalid number", path: "until" }] },
+    });
+  }
+  const untilMs = Math.min(Math.max(rawUntil, 1), 30000);
   return { untilMs };
 }

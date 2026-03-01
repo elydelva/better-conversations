@@ -6,6 +6,7 @@ export class ParticipantNotFoundError extends ConversationError {
 
   constructor(conversationId: string, chatterId: string) {
     super(`Participant not found: chatter ${chatterId} in conversation ${conversationId}`, {
+      expose: true,
       metadata: { conversationId, chatterId },
     });
   }
