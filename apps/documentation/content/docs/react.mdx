@@ -1,0 +1,196 @@
+---
+title: React
+description: TanStack Query hooks and ConversationProvider for React apps.
+---
+
+## Installation
+
+```bash
+bun add @better-conversation/react @better-conversation/client @tanstack/react-query
+```
+
+Requires React 18+ and a [client](/docs/client) instance. The React package provides `ConversationProvider`, query hooks, mutation hooks, and automatic invalidation.
+
+## Setup
+
+Wrap your app (or the subtree that needs conversation data) with `ConversationProvider`:
+
+```tsx title="app/providers.tsx"
+"use client";
+
+import { createBetterConversationsClient } from "@better-conversation/client";
+import { sseClient } from "@better-conversation/plugin-sse/client";
+import { ConversationProvider } from "@better-conversation/react";
+
+const client = createBetterConversationsClient({
+  baseURL: "/api/conversation",
+  plugins: [sseClient()],
+});
+
+export function Providers({ children }: { children: React.ReactNode }) {
+  return (
+    <ConversationProvider client={client}>
+      {children}
+    </ConversationProvider>
+  );
+}
+```
+
+### Custom QueryClient
+
+Pass a custom TanStack Query client if needed:
+
+```tsx
+<ConversationProvider client={client} queryClient={myQueryClient}>
+  {children}
+</ConversationProvider>
+```
+
+Default `QueryClient` uses `staleTime: 30_000` and `gcTime: 5 * 60_000`.
+
+## Query Hooks
+
+| Hook | Description |
+|------|-------------|
+| `useChatters` | Paginated list of chatters |
+| `useConversations` | Paginated list of conversations |
+| `useConversation` | Single conversation by ID |
+| `useBlocks` | Paginated blocks for a conversation |
+| `useParticipants` | Participants in a conversation |
+| `usePolicy` | Resolved policy for chatter (optional conversation/thread) |
+
+### Example
+
+```tsx
+import {
+  useConversation,
+  useBlocks,
+  useParticipants,
+  usePolicy,
+} from "@better-conversation/react";
+
+function ConversationView({
+  conversationId,
+  chatterId,
+}: {
+  conversationId: string;
+  chatterId: string;
+}) {
+  const { data: conversation, isLoading } = useConversation(conversationId);
+  const { data: blocksData } = useBlocks(conversationId, { limit: 50 });
+  const { data: participants } = useParticipants(conversationId);
+  const { data: policy } = usePolicy(chatterId, conversationId);
+
+  if (isLoading) return <Spinner />;
+
+  return (
+    <div>
+      <h1>{conversation?.title}</h1>
+      {blocksData?.items.map((b) => (
+        <Block key={b.id} block={b} canEdit={policy?.canEditBlock} />
+      ))}
+    </div>
+  );
+}
+```
+
+### Query Parameters
+
+```ts
+// Pagination
+useChatters({ limit: 20, cursor: nextCursor });
+useConversations({ entityType: "support", limit: 10, cursor });
+useBlocks(conversationId, { limit: 50, before, after, threadParentId });
+
+// Policy scope
+usePolicy(chatterId, conversationId, threadParentBlockId);
+```
+
+## Mutation Hooks
+
+| Hook | Description |
+|------|-------------|
+| `useCreateChatter` | Create a chatter |
+| `useCreateConversation` | Create a conversation |
+| `useSendBlock` | Send a block |
+| `useUpdateBlock` | Update a block |
+| `useDeleteBlock` | Delete a block |
+| `useAddParticipant` | Add participant |
+| `useRemoveParticipant` | Remove participant |
+
+Mutations automatically invalidate related queries on success.
+
+### Example
+
+```tsx
+import {
+  useSendBlock,
+  useUpdateBlock,
+  useDeleteBlock,
+} from "@better-conversation/react";
+
+function BlockComposer({ conversationId, authorId }: Props) {
+  const sendBlock = useSendBlock(conversationId);
+
+  const handleSend = () => {
+    sendBlock.mutate({
+      authorId,
+      type: "text",
+      body: message,
+    });
+  };
+
+  return <form onSubmit={handleSend}>...</form>;
+}
+
+function BlockActions({ conversationId, blockId }: Props) {
+  const updateBlock = useUpdateBlock(conversationId, blockId);
+  const deleteBlock = useDeleteBlock(conversationId, blockId);
+
+  return (
+    <>
+      <button onClick={() => updateBlock.mutate({ body: newBody })}>
+        Save
+      </button>
+      <button onClick={() => deleteBlock.mutate()}>Delete</button>
+    </>
+  );
+}
+```
+
+## useConversationClient
+
+Access the underlying client for methods not covered by hooks:
+
+```tsx
+import { useConversationClient } from "@better-conversation/react";
+
+function CustomAction() {
+  const client = useConversationClient();
+
+  const archive = () => client.conversations.archive(id);
+  const markRead = () => client.participants.markRead(conversationId, chatterId);
+
+  return <button onClick={archive}>Archive</button>;
+}
+```
+
+Throws if used outside `ConversationProvider`.
+
+## Query Keys
+
+Export `queryKeys` for manual invalidation or prefetching:
+
+```ts
+import { queryKeys } from "@better-conversation/react";
+import { useQueryClient } from "@tanstack/react-query";
+
+const queryClient = useQueryClient();
+queryClient.invalidateQueries({ queryKey: queryKeys.conversations.blocks(id) });
+queryClient.prefetchQuery({ queryKey: queryKeys.conversations.detail(id) });
+```
+
+## See Also
+
+- [Client](/docs/client) — Core client API and plugins
+- [Next.js](/docs/next) — App Router setup with the client

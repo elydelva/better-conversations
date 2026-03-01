@@ -188,42 +188,9 @@ client.permissions.grant(chatterId, { action, scope? });
 client.permissions.revoke(chatterId, action);
 ```
 
-## React Hooks
+## React Integration
 
-Use the `@better-conversation/react` package for React integration with TanStack Query:
-
-```ts
-import {
-  ConversationProvider,
-  useChatters,
-  useConversation,
-  useBlocks,
-  useParticipants,
-  usePolicy,
-} from "@better-conversation/react";
-```
-
-```tsx
-// Wrap your app with ConversationProvider
-<ConversationProvider client={convClient}>
-  <App />
-</ConversationProvider>
-
-function ConversationView({ conversationId }: { conversationId: string }) {
-  const { data: conversation, isLoading, error } = useConversation(conversationId);
-  const { data: blocksData } = useBlocks(conversationId, { limit: 50 });
-  const { data: participants } = useParticipants(conversationId);
-  // ...
-}
-```
-
-| Hook | Description |
-|------|-------------|
-| `useChatters` | Paginated list of chatters |
-| `useConversation` | Fetch a single conversation |
-| `useBlocks` | Paginated blocks for a conversation |
-| `useParticipants` | Participants in a conversation |
-| `usePolicy` | Resolved policy for a chatter |
+See [React](/docs/react) for the full `@better-conversation/react` guide — `ConversationProvider`, TanStack Query hooks, and mutations.
 
 ## Error Handling
 
