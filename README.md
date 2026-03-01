@@ -21,8 +21,12 @@ console.log(version);
 |---------|-------------|
 | `@better-conversation/core` | Pure engine, interfaces, pipeline hooks |
 | `@better-conversation/client` | Type-safe browser SDK |
-| `@better-conversation/adapters` | Drizzle, Prisma, MongoDB |
-| `@better-conversation/handlers` | Hono, Express, Next.js |
+| `@better-conversation/adapter-drizzle` | PostgreSQL via Drizzle ORM |
+| `@better-conversation/adapter-prisma` | Placeholder |
+| `@better-conversation/adapter-mongodb` | Placeholder |
+| `@better-conversation/handler-next` | Next.js App Router |
+| `@better-conversation/handler-hono` | Placeholder |
+| `@better-conversation/handler-express` | Placeholder |
 | `@better-conversation/blocks` | media, reaction, embed, poll |
 | `@better-conversation/roles` | moderator, admin, guest, support |
 | `@better-conversation/plugins` | SSE, audit, rate-limit |

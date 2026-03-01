@@ -27,17 +27,22 @@ This file provides context for AI assistants working on this codebase.
 packages/
 ├── core/           # @better-conversation/core — engine, interfaces, zero deps
 ├── client/         # @better-conversation/client — browser SDK
-├── adapters/       # @better-conversation/adapters — drizzle, prisma, mongodb (sub-exports)
-├── handlers/       # @better-conversation/handlers — hono, express, next
+├── adapter-drizzle/   # @better-conversation/adapter-drizzle — PostgreSQL
+├── adapter-prisma/    # @better-conversation/adapter-prisma — placeholder
+├── adapter-mongodb/   # @better-conversation/adapter-mongodb — placeholder
+├── handler-next/      # @better-conversation/handler-next — Next.js
+├── handler-hono/      # @better-conversation/handler-hono — placeholder
+├── handler-express/   # @better-conversation/handler-express — placeholder
 ├── blocks/         # @better-conversation/blocks — media, reaction, embed, poll
 ├── roles/          # @better-conversation/roles — moderator, admin, guest, support
 └── plugins/        # @better-conversation/plugins — sse, audit, rate-limit
 ```
 
-**Package convention**: One package per category with sub-exports. Example:
+**Package convention**: One package per adapter and per handler for dependency independence. Example:
 
 ```ts
-import { drizzleAdapter } from "@better-conversation/adapters/drizzle";
+import { drizzleAdapter } from "@better-conversation/adapter-drizzle";
+import { createNextHandler } from "@better-conversation/handler-next";
 import { moderatorRole } from "@better-conversation/roles/moderator";
 ```
 
@@ -67,3 +72,4 @@ bun run changeset    # Add a changeset
 
 - **PLAN.md**: Whitepaper and architecture spec (may contain French)
 - **CLAUDE.md** (workspace rules): Bun-first conventions
+- **TESTS_POLICY.md**: Strict testing policy — `.spec.ts` colocation, edge cases, mocking
