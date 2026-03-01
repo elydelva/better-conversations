@@ -1,17 +1,14 @@
 {
-  "name": "@better-conversation/adapters",
+  "name": "@better-conversation/adapter-prisma",
   "version": "0.0.0",
   "type": "module",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "exports": {
-    ".": "./src/index.ts",
-    "./drizzle": "./src/drizzle/index.ts",
-    "./prisma": "./src/prisma/index.ts",
-    "./mongodb": "./src/mongodb/index.ts"
+    ".": "./src/index.ts"
   },
   "scripts": {
-    "build": "echo 'Adapter package - build tbd'"
+    "build": "echo 'Placeholder - not implemented'"
   },
   "dependencies": {
     "@better-conversation/core": "workspace:*"
