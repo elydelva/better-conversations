@@ -13,6 +13,8 @@ function mapRowToParticipant(row: Record<string, unknown>): Participant {
     joinedAt: new Date((r.joinedAt ?? r.joined_at) as string | Date),
     leftAt: toDate(r.leftAt ?? r.left_at),
     lastReadAt: toDate(r.lastReadAt ?? r.last_read_at),
+    lastSeenAt: toDate(r.lastSeenAt ?? r.last_seen_at),
+    typingUntil: toDate(r.typingUntil ?? r.typing_until),
     metadata: (r.metadata as Record<string, unknown>) ?? null,
   };
 }
@@ -72,6 +74,8 @@ export function createParticipantsAdapter(ctx: DrizzleAdapterContext): Participa
       if (data.role !== undefined) set.role = data.role;
       if (data.leftAt !== undefined) set.leftAt = data.leftAt;
       if (data.lastReadAt !== undefined) set.lastReadAt = data.lastReadAt;
+      if (data.lastSeenAt !== undefined) set.lastSeenAt = data.lastSeenAt;
+      if (data.typingUntil !== undefined) set.typingUntil = data.typingUntil;
       if (data.metadata !== undefined) set.metadata = data.metadata;
       if (Object.keys(set).length === 0) {
         const found = await db.select().from(participants).where(eq(participants.id, id)).limit(1);

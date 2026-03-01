@@ -2,6 +2,7 @@ import { createAdapterHelpers } from "@better-conversation/core";
 import type { DatabaseAdapter } from "@better-conversation/core";
 import { buildSchema } from "@better-conversation/core/schema";
 import type { SchemaContributor } from "@better-conversation/core/schema";
+import { createBlockHistoryAdapter } from "./block-history";
 import { createBlocksAdapter } from "./blocks";
 import { createChattersAdapter } from "./chatters";
 import { createConversationsAdapter } from "./conversations";
@@ -41,7 +42,15 @@ export function drizzleAdapter(
     schema = provider === "sqlite" ? createSchemaSqlite(prefix) : createSchema(prefix);
   }
 
-  const ctx: DrizzleAdapterContext = { db, schema, helpers };
+  const ctx = { db, schema, helpers };
+
+  const historyAdapter =
+    provider === "pg" &&
+    options?.plugins &&
+    options.plugins.length > 0 &&
+    (schema as { blockHistory?: unknown }).blockHistory
+      ? createBlockHistoryAdapter(ctx as Parameters<typeof createBlockHistoryAdapter>[0])
+      : undefined;
 
   return {
     chatters: createChattersAdapter(ctx),
@@ -51,6 +60,9 @@ export function drizzleAdapter(
     permissions: createPermissionsAdapter(ctx),
     registries: createRegistriesAdapter(ctx),
     policies: createPoliciesAdapter(ctx),
+    extensions: {
+      ...(historyAdapter && { history: historyAdapter }),
+    },
   };
 }
 
