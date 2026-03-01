@@ -132,18 +132,18 @@ export function translateToDrizzle(
 
     const uniqueConstraints = def.uniqueConstraints;
     if (uniqueConstraints && uniqueConstraints.length > 0) {
-      table = pgTable(
-        tableName,
-        columns,
-        (t) =>
-          uniqueConstraints.flatMap((uc) => [
-            unique().on(
-              ...uc.columns.map(
-                (c) => (t as Record<string, unknown>)[c] as ReturnType<typeof varchar>
-              )
-            ),
-          ]) as [ReturnType<typeof unique>]
-      );
+      table = pgTable(tableName, columns, (t) => {
+        const out: unknown[] = [];
+        for (const uc of uniqueConstraints ?? []) {
+          const refs = uc.columns
+            .map((c) => (t as Record<string, unknown>)[c])
+            .filter((x) => x != null);
+          if (refs.length > 0) {
+            out.push(unique().on(...(refs as [unknown, ...unknown[]])));
+          }
+        }
+        return out;
+      });
     } else {
       table = pgTable(tableName, columns);
     }
@@ -156,5 +156,5 @@ export function translateToDrizzle(
     result[schemaKey] = table;
   }
 
-  return result as TranslateToDrizzleResult;
+  return result as unknown as TranslateToDrizzleResult;
 }

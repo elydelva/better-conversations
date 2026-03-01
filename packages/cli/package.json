@@ -1,0 +1,22 @@
+{
+  "name": "@better-conversation/cli",
+  "version": "1.0.0",
+  "type": "module",
+  "bin": {
+    "bc": "./dist/cli.js"
+  },
+  "main": "./dist/cli.js",
+  "types": "./dist/cli.d.ts",
+  "scripts": {
+    "build": "tsc"
+  },
+  "dependencies": {
+    "@better-conversation/core": "workspace:*",
+    "cac": "^6.7.14"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "catalog:"
+  },
+  "files": ["dist"]
+}

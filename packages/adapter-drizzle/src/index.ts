@@ -65,3 +65,5 @@ export function drizzleAdapter(
 
 export { createSchema } from "./schema";
 export { createSchemaSqlite } from "./schema.sqlite";
+export { translateToDrizzle } from "./schema/translate";
+export type { TranslateToDrizzleResult } from "./schema/translate";

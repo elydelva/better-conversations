@@ -141,6 +141,21 @@
         "typescript": "catalog:",
       },
     },
+    "packages/cli": {
+      "name": "@better-conversation/cli",
+      "version": "1.0.0",
+      "bin": {
+        "bc": "./dist/cli.js",
+      },
+      "dependencies": {
+        "@better-conversation/core": "workspace:*",
+        "cac": "^6.7.14",
+      },
+      "devDependencies": {
+        "@types/node": "^22.0.0",
+        "typescript": "catalog:",
+      },
+    },
     "packages/client": {
       "name": "@better-conversation/client",
       "version": "1.0.0",
@@ -412,6 +427,8 @@
     "@better-conversation/benchmarks": ["@better-conversation/benchmarks@workspace:packages/benchmarks"],
 
     "@better-conversation/blocks": ["@better-conversation/blocks@workspace:packages/blocks"],
+
+    "@better-conversation/cli": ["@better-conversation/cli@workspace:packages/cli"],
 
     "@better-conversation/client": ["@better-conversation/client@workspace:packages/client"],
 
@@ -938,6 +955,8 @@
     "bytes": ["bytes@3.1.2", "", {}, "sha512-/Nf7TyzTx6S3yRJObOAV7956r8cr2+Oj8AC5dt8wSP3BQAoeX58NoHyCU8P8zGkNXStjTSi6fzO6F0pBdcYbEg=="],
 
     "c12": ["c12@3.1.0", "", { "dependencies": { "chokidar": "^4.0.3", "confbox": "^0.2.2", "defu": "^6.1.4", "dotenv": "^16.6.1", "exsolve": "^1.0.7", "giget": "^2.0.0", "jiti": "^2.4.2", "ohash": "^2.0.11", "pathe": "^2.0.3", "perfect-debounce": "^1.0.0", "pkg-types": "^2.2.0", "rc9": "^2.1.2" }, "peerDependencies": { "magicast": "^0.3.5" }, "optionalPeers": ["magicast"] }, "sha512-uWoS8OU1MEIsOv8p/5a82c3H31LsWVR5qiyXVfBNOzfffjUWtPnhAb4BYI2uG2HfGmZmFjCtui5XNWaps+iFuw=="],
+
+    "cac": ["cac@6.7.14", "", {}, "sha512-b6Ilus+c3RrdDk+JhLKUAQfzzgLEPy6wcXqS7f/xe1EETvsDP6GORG7SFuOs6cID5YkqchW/LXZbX5bc8j7ZcQ=="],
 
     "call-bind-apply-helpers": ["call-bind-apply-helpers@1.0.2", "", { "dependencies": { "es-errors": "^1.3.0", "function-bind": "^1.1.2" } }, "sha512-Sp1ablJ0ivDkSzjcaJdxEunN5/XvksFJ2sMBFfq6x0ryhQV/2b/KwFe21cMpmHtPOSij8K99/wSfoEuTObmuMQ=="],
 

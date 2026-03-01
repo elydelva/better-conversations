@@ -1,4 +1,4 @@
-import { getEngine } from "@/lib/engine";
+import { getEngine } from "@/lib/conversation";
 import { createNextHandler } from "@better-conversation/handler-next";
 import type { NextRequest } from "next/server";
 

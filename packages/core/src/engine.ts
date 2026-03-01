@@ -6,6 +6,7 @@ import type { ConversationAfterCreateCtx } from "./hooks/ConversationAfterCreate
 import { defaultBlockRegistry } from "./registry/defaultBlockRegistry.js";
 import { defaultRoleRegistry } from "./registry/defaultRoleRegistry.js";
 import type { BlockRegistry, RoleRegistry } from "./registry/index.js";
+import type { SchemaContributor } from "./schema/buildSchema.js";
 import { BlockService } from "./services/BlockService.js";
 import { ChatterService } from "./services/ChatterService.js";
 import { ConversationService } from "./services/ConversationService.js";
@@ -151,6 +152,26 @@ export class ConversationEngine<
 
   getHooks(): ConversationConfig<TBlocks, TRoles>["hooks"] {
     return this._hooks;
+  }
+
+  /**
+   * Returns schema config for CLI schema generation. Used by @better-conversation/cli.
+   */
+  getSchemaConfigForCLI(): { tablePrefix: string; contributors: SchemaContributor[] } {
+    const plugins = this.config.plugins ?? [];
+    const contributors: SchemaContributor[] = [];
+    for (const p of plugins) {
+      if (p != null && typeof p === "object" && "schemaContribution" in p) {
+        const c = p as SchemaContributor;
+        if (c.schemaContribution != null) {
+          contributors.push(c);
+        }
+      }
+    }
+    return {
+      tablePrefix: this.config.tablePrefix ?? "bc_",
+      contributors,
+    };
   }
 
   async init(): Promise<void> {
