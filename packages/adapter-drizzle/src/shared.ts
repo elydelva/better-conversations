@@ -5,11 +5,15 @@
 import type { createAdapterHelpers } from "@better-conversation/core";
 import type { createSchema } from "./schema";
 import type { createSchemaSqlite } from "./schema.sqlite";
+import type { TranslateToDrizzleResult } from "./schema/translate";
 
 /* biome-ignore lint/suspicious/noExplicitAny: Drizzle fluent API requires untyped chain */
 export type DrizzleDb = any;
 
-export type DrizzleSchema = ReturnType<typeof createSchema> | ReturnType<typeof createSchemaSqlite>;
+export type DrizzleSchema =
+  | ReturnType<typeof createSchema>
+  | ReturnType<typeof createSchemaSqlite>
+  | TranslateToDrizzleResult;
 
 export interface DrizzleAdapterContext {
   db: DrizzleDb;

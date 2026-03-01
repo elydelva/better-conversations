@@ -44,13 +44,10 @@ export function drizzleAdapter(
 
   const ctx = { db, schema, helpers };
 
-  const historyAdapter =
-    provider === "pg" &&
-    options?.plugins &&
-    options.plugins.length > 0 &&
-    (schema as { blockHistory?: unknown }).blockHistory
-      ? createBlockHistoryAdapter(ctx as Parameters<typeof createBlockHistoryAdapter>[0])
-      : undefined;
+  const hasBlockHistory = (schema as { blockHistory?: unknown }).blockHistory != null;
+  const historyAdapter = hasBlockHistory
+    ? createBlockHistoryAdapter(ctx as Parameters<typeof createBlockHistoryAdapter>[0])
+    : undefined;
 
   return {
     chatters: createChattersAdapter(ctx),

@@ -36,13 +36,7 @@ function columnDefToDrizzle(
   def: ColumnDef,
   tablePrefix: string,
   tableLogicalName: string
-):
-  | ReturnType<typeof varchar>
-  | ReturnType<typeof text>
-  | ReturnType<typeof integer>
-  | ReturnType<typeof boolean>
-  | ReturnType<typeof timestamp>
-  | ReturnType<typeof jsonb> {
+) {
   const dbName = camelToSnake(key);
 
   switch (def.type) {
@@ -50,7 +44,6 @@ function columnDefToDrizzle(
       const col = varchar(dbName, { length: def.length ?? 255 });
       if (def.primaryKey) return col.primaryKey();
       if (def.nullable === false) return col.notNull();
-      if (def.defaultValue === "now") return col.defaultNow();
       if (def.defaultValue !== undefined && def.defaultValue !== "now")
         return col.default(def.defaultValue as string);
       return col;
@@ -89,9 +82,10 @@ function columnDefToDrizzle(
       return col;
     }
     case "enum": {
-      if (!def.enumValues) throw new Error(`Enum column ${key} missing enumValues`);
+      if (!def.enumValues || def.enumValues.length === 0)
+        throw new Error(`Enum column ${key} missing enumValues`);
       const enumName = `${tablePrefix}${tableLogicalName}_${key}_enum`;
-      const pgEnumVal = pgEnum(enumName, def.enumValues);
+      const pgEnumVal = pgEnum(enumName, def.enumValues as [string, ...string[]]);
       const col = pgEnumVal(dbName);
       if (def.nullable === false) return col.notNull();
       if (def.defaultValue) return col.default(def.defaultValue as string);

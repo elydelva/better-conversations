@@ -48,6 +48,8 @@ export const participants = sqliteTable(`${prefix}participants`, {
     .notNull(),
   leftAt: integer("left_at", { mode: "timestamp" }),
   lastReadAt: integer("last_read_at", { mode: "timestamp" }),
+  lastSeenAt: integer("last_seen_at", { mode: "timestamp" }),
+  typingUntil: integer("typing_until", { mode: "timestamp" }),
   metadata: text("metadata", { mode: "json" }),
 });
 
@@ -67,6 +69,21 @@ export const blocks = sqliteTable(`${prefix}blocks`, {
   refusalReason: text("refusal_reason"),
   flaggedAt: integer("flagged_at", { mode: "timestamp" }),
   editedAt: integer("edited_at", { mode: "timestamp" }),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .$defaultFn(() => new Date())
+    .notNull(),
+});
+
+export const blockHistory = sqliteTable(`${prefix}block_history`, {
+  id: text("id").primaryKey(),
+  blockId: text("block_id")
+    .notNull()
+    .references(() => blocks.id, { onDelete: "cascade" }),
+  version: integer("version").notNull(),
+  body: text("body"),
+  metadata: text("metadata", { mode: "json" }),
+  editedAt: integer("edited_at", { mode: "timestamp" }).notNull(),
+  editedBy: text("edited_by"),
   createdAt: integer("created_at", { mode: "timestamp" })
     .$defaultFn(() => new Date())
     .notNull(),

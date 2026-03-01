@@ -56,6 +56,8 @@ export function createParticipantsAdapter(ctx: DrizzleAdapterContext): Participa
         joinedAt: now,
         leftAt: null,
         lastReadAt: null,
+        lastSeenAt: null,
+        typingUntil: null,
         metadata: null,
       });
       return mapRowToParticipant({
@@ -66,6 +68,8 @@ export function createParticipantsAdapter(ctx: DrizzleAdapterContext): Participa
         joined_at: now,
         left_at: null,
         last_read_at: null,
+        last_seen_at: null,
+        typing_until: null,
         metadata: null,
       });
     },
