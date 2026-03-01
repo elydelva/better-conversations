@@ -48,7 +48,11 @@ export class ConversationEngine<
       generateId,
     });
     this.permissions = new PermissionService(adapter.permissions);
-    this.policies = new PolicyService({ adapter: adapter.policies });
+    this.policies = new PolicyService({
+      adapter,
+      policiesConfig: config.policies,
+      roleRegistry: { ...defaultRoleRegistry, ...config.additionalRoles },
+    });
   }
 
   async init(): Promise<void> {
