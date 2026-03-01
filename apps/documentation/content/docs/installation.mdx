@@ -1,0 +1,82 @@
+---
+title: Installation
+description: Install and configure better-conversation in your project.
+---
+
+# Installation
+
+Install the core package and choose your adapter and handler.
+
+## Using Bun
+
+```bash
+bun add @better-conversation/core @better-conversation/adapter-drizzle
+```
+
+For Next.js:
+
+```bash
+bun add @better-conversation/handler-next
+```
+
+For Hono or Express:
+
+```bash
+bun add @better-conversation/handler-hono
+# or
+bun add @better-conversation/handler-express
+```
+
+## Basic Setup
+
+Create your conversation engine:
+
+```ts
+// lib/conversation.ts
+import { betterConversation } from "@better-conversation/core";
+import { drizzleAdapter } from "@better-conversation/adapter-drizzle";
+import { db } from "@/lib/db";
+
+export const conv = betterConversation({
+  adapter: drizzleAdapter(db, { provider: "pg" }),
+});
+```
+
+## Mount in Your Framework
+
+### Next.js App Router
+
+```ts
+// app/api/conversation/[[...path]]/route.ts
+import { conv } from "@/lib/conversation";
+import { createNextHandler } from "@better-conversation/handler-next";
+
+const handler = createNextHandler(conv, { basePath: "/api/conversation" });
+
+export const GET = handler.GET;
+export const POST = handler.POST;
+export const PATCH = handler.PATCH;
+export const DELETE = handler.DELETE;
+```
+
+### Hono
+
+```ts
+import { conv } from "@/lib/conversation";
+import { createHonoHandler } from "@better-conversation/handler-hono";
+
+app.route("/conversation", createHonoHandler(conv));
+```
+
+### Express
+
+```ts
+import { conv } from "@/lib/conversation";
+import { createExpressHandler } from "@better-conversation/handler-express";
+
+app.use("/conversation", createExpressHandler(conv));
+```
+
+## Database Migrations
+
+Run your adapter's migrations (Drizzle, Prisma, etc.) to create the required tables: `bc_chatters`, `bc_conversations`, `bc_participants`, `bc_blocks`, and related registry tables.

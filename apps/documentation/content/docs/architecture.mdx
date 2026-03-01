@@ -1,0 +1,70 @@
+---
+title: Architecture
+description: Core structure, layers, and interfaces of better-conversation.
+---
+
+# Architecture Overview
+
+The core principle: **better-conversation core does not know what Express, Next.js, Drizzle, or PostgreSQL are.** It never imports them. It works exclusively with **TypeScript interfaces** that you inject via config — Clean Architecture applied to an npm package.
+
+## Package Layers
+
+```
+core/          → Pure engine. Interfaces. Hook pipeline. Permission logic. Zero external imports.
+adapters/      → Concrete implementations of core interfaces. Drizzle, Prisma, MongoDB.
+handlers/      → Optional HTTP bridges. Next.js, Hono, Express. Take a ConversationEngine, expose routes.
+blocks/        → Block plugins (media, reaction, embed, poll). Each enriches the core type registry.
+roles/         → Role plugins (moderator, admin). Each carries a policy and registers in DB.
+client/        → Type-safe browser SDK. Fetches handler endpoints. Infers block/role types.
+plugins/       → Extensions: realtime (SSE, WS), audit log, rate limiting, archival.
+```
+
+## DatabaseAdapter Interface
+
+The core defines this interface. The adapter implements it. The core only knows the interface.
+
+| Area | Methods |
+|------|---------|
+| **chatters** | `find`, `findByEntity`, `create`, `update` |
+| **conversations** | `find`, `findByEntity`, `list`, `create`, `update` |
+| **participants** | `list`, `find`, `add`, `update`, `remove` |
+| **blocks** | `find`, `list`, `create`, `update`, `softDelete` |
+| **permissions** | `check`, `grant`, `revoke` |
+
+## ConversationEngine
+
+The engine operates solely via `config.adapter`. It does not know if you're using Drizzle, Prisma, or an in-memory mock.
+
+```ts
+export class ConversationEngine<
+  TBlocks extends BlockRegistry = DefaultBlockRegistry,
+  TRoles extends RoleRegistry = DefaultRoleRegistry,
+> {
+  constructor(private readonly config: ConversationConfig<TBlocks, TRoles>) {}
+}
+```
+
+## Config — Single Entry Point
+
+```ts
+export interface ConversationConfig<TBlocks, TRoles> {
+  adapter: DatabaseAdapter;
+  additionalBlocks?: TBlocks;
+  additionalRoles?: TRoles;
+  hooks?: ConversationHooks<TBlocks, TRoles>;
+  policies?: PolicyConfig<TRoles>;
+  plugins?: ConversationPlugin[];
+  tablePrefix?: string;  // default: "bc_"
+  generateId?: () => string;
+}
+```
+
+## Design Principles
+
+1. **Core pure** — No framework, ORM, or runtime in core. Testable without DB or HTTP.
+2. **Interfaces-first** — Core defines interfaces; adapters implement them.
+3. **Blocks = registry** — Core only knows `text`. Each additional block enriches the registry.
+4. **Hooks = pipeline** — Every action passes through outcomes: `next`, `refuse`, `transform`, `flag`, `defer`, `queue`.
+5. **Zero vendor** — No external service required. Realtime is opt-in.
+6. **Type-safety end-to-end** — Block metadata types flow from `createBlock()` to the browser client.
+7. **Policies = merge tree** — Rules compose by level. More specific scope wins. Defaults are safe.

@@ -1,0 +1,32 @@
+---
+title: Introduction
+description: Get started with better-conversation — a headless TypeScript messaging engine.
+---
+
+# Introduction
+
+**better-conversation** is a headless, pure TypeScript messaging engine with zero framework or database dependencies. It exposes interfaces; you provide the implementations. Same philosophy as better-auth — but for conversations: chatters, typed blocks, threads, pipeline hooks, permissions, and a multi-level policy system (global, role, chatter, conversation, thread) with priority-based resolution. No extra server. No HTTP coupling.
+
+## Core Principles
+
+- **Pure core** — The core has no knowledge of Express, Next.js, Drizzle, or PostgreSQL. It never imports them. It works exclusively with **TypeScript interfaces** that you inject via config.
+- **Blocks by default** — Text only out of the box; additional blocks come from opt-in plugins.
+- **Hooks** — Pipeline with outcomes (`next`, `refuse`, `transform`, `flag`, `defer`, `queue`).
+- **Policies** — Multi-level merge from global → role → chatter → conversation → thread.
+- **Adapters** — Drizzle, Prisma, Mongo; you choose the storage backend.
+
+## What You Get
+
+| Feature | Description |
+|---------|-------------|
+| **Chatters** | Identity abstraction — users, bots, organizations |
+| **Conversations** | Grouped threads with participants and metadata |
+| **Blocks** | Typed content units (text, media, reactions, custom) |
+| **Hooks** | Moderation, rate limiting, enrichment, side effects |
+| **Policies** | Composable authorization rules with merge tree |
+| **SDK** | Server and client APIs, fully typed end-to-end |
+
+## Next Steps
+
+- [Installation](/docs/installation) — Set up better-conversation in your project
+- [Architecture](/docs/architecture) — Understand the core structure and layers
