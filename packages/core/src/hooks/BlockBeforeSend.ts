@@ -12,6 +12,8 @@ export interface BlockBeforeSendCtx<TBlockInput = BlockInput> {
   isThread: boolean;
   isFirstReply: boolean;
   resolvedPolicy?: ResolvedPolicy;
+  /** Engine reference for plugin hooks that need to access services */
+  engine?: unknown;
 }
 
 export interface BlockOutcomes<TBlockInput = BlockInput> {

@@ -11,6 +11,7 @@ import type { BlockOutcomes } from "../hooks/BlockBeforeSend.js";
 import type { BlockBeforeSendCtx } from "../hooks/BlockBeforeSend.js";
 import type { DeleteOutcomes } from "../hooks/BlockDelete.js";
 import type { BlockDeleteCtx } from "../hooks/BlockDelete.js";
+import type { BlockAfterUpdateCtx, BlockBeforeUpdateCtx } from "../hooks/BlockUpdate.js";
 import { createBlockOutcomes, createDeleteOutcomes } from "../hooks/OutcomeBuilder.js";
 import type { HookResult } from "../hooks/common.js";
 import type { Block, BlockFilters, BlockInput, Paginated } from "../types/index.js";
@@ -19,10 +20,13 @@ import type { PolicyService } from "./PolicyService.js";
 export interface BlockServiceConfig {
   adapter: DatabaseAdapter;
   policyService?: PolicyService;
+  engine?: unknown;
   hooks?: {
     onBlockBeforeSend?: (ctx: BlockBeforeSendCtx, outcomes: BlockOutcomes) => Promise<HookResult>;
     onBlockAfterSend?: (ctx: BlockAfterSendCtx) => Promise<void>;
     onBlockBeforeDelete?: (ctx: BlockDeleteCtx, outcomes: DeleteOutcomes) => Promise<HookResult>;
+    onBlockBeforeUpdate?: (ctx: BlockBeforeUpdateCtx) => Promise<void>;
+    onBlockAfterUpdate?: (ctx: BlockAfterUpdateCtx) => Promise<void>;
   };
   generateId?: () => string;
 }
@@ -166,6 +170,7 @@ export class BlockService {
       isThread,
       isFirstReply,
       resolvedPolicy,
+      engine: this.config.engine,
     };
 
     const outcomes = createBlockOutcomes();
@@ -233,7 +238,24 @@ export class BlockService {
   }
 
   async updateMeta(id: string, data: Partial<Pick<Block, "body" | "metadata">>): Promise<Block> {
-    return this.blocks.update(id, data);
+    const block = await this.blocks.find(id);
+    if (!block) {
+      throw new BlockNotFoundError(id);
+    }
+    const hooks = this.config.hooks;
+    if (hooks?.onBlockBeforeUpdate) {
+      await hooks.onBlockBeforeUpdate({ block, data });
+    }
+    const updated = await this.blocks.update(id, data);
+    if (hooks?.onBlockAfterUpdate) {
+      await hooks.onBlockAfterUpdate({
+        previousBlock: block,
+        block: updated,
+        data,
+        engine: this.config.engine,
+      });
+    }
+    return updated;
   }
 
   async delete(id: string): Promise<void> {
