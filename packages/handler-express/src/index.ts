@@ -8,6 +8,10 @@ import type { Request, RequestHandler, Response } from "express";
 
 export interface CreateExpressHandlerOptions {
   basePath?: string;
+  /** Returns the authenticated chatter ID from the request. Use session, JWT, etc. */
+  getCurrentChatter?: (req: Request) => Promise<string | null> | string | null;
+  /** If true, return 401 when getCurrentChatter returns null */
+  requireAuth?: boolean;
 }
 
 function queryToRecord(q: Request["query"]): Record<string, string> {
@@ -20,7 +24,10 @@ function queryToRecord(q: Request["query"]): Record<string, string> {
   return out;
 }
 
-async function toCoreRequest(req: Request): Promise<CoreRequest> {
+async function toCoreRequest(
+  req: Request,
+  options?: CreateExpressHandlerOptions
+): Promise<CoreRequest> {
   const path = req.path;
   const query = queryToRecord(req.query);
 
@@ -32,13 +39,22 @@ async function toCoreRequest(req: Request): Promise<CoreRequest> {
         : parseJsonBody(req.body != null ? String(req.body) : null);
   }
 
-  return {
+  const coreReq: CoreRequest = {
     method: req.method,
     path,
     params: {},
     query,
     body,
   };
+
+  if (options?.getCurrentChatter) {
+    const chatterId = await Promise.resolve(options.getCurrentChatter(req));
+    if (chatterId) {
+      coreReq.auth = { chatterId };
+    }
+  }
+
+  return coreReq;
 }
 
 function sendResponse(
@@ -76,7 +92,11 @@ export function createExpressHandler(
   const basePath = options?.basePath ?? "";
 
   return async (req: Request, res: Response) => {
-    const coreReq = await toCoreRequest(req);
+    const coreReq = await toCoreRequest(req, options);
+    if (options?.requireAuth && options?.getCurrentChatter && !coreReq.auth) {
+      res.status(401).end();
+      return;
+    }
     const coreRes = await dispatch(engine, coreReq, basePath);
     sendResponse(res, coreRes.status, coreRes.body, {
       stream: coreRes.stream,

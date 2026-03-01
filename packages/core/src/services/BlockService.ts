@@ -242,6 +242,29 @@ export class BlockService {
     if (!block) {
       throw new BlockNotFoundError(id);
     }
+    if (this.config.policyService) {
+      const resolvedPolicy = await this.config.policyService.resolve(
+        block.authorId,
+        block.conversationId,
+        block.threadParentId ?? undefined
+      );
+      if (resolvedPolicy.canEditOwnBlocks === false) {
+        throw new BlockRefusedError("Editing own blocks is not allowed", {
+          code: "CANNOT_EDIT_OWN_BLOCKS",
+          expose: true,
+        });
+      }
+      const editWindowSeconds = resolvedPolicy.editWindowSeconds;
+      if (editWindowSeconds != null) {
+        const elapsedMs = Date.now() - new Date(block.createdAt).getTime();
+        if (elapsedMs > editWindowSeconds * 1000) {
+          throw new BlockRefusedError(`Edit window expired (${editWindowSeconds}s)`, {
+            code: "EDIT_WINDOW_EXPIRED",
+            expose: true,
+          });
+        }
+      }
+    }
     const hooks = this.config.hooks;
     if (hooks?.onBlockBeforeUpdate) {
       await hooks.onBlockBeforeUpdate({ block, data });
@@ -263,12 +286,39 @@ export class BlockService {
     if (!block) {
       throw new BlockNotFoundError(id);
     }
+    if (block.status === "deleted") {
+      throw new BlockRefusedError("Block is already deleted", {
+        code: "ALREADY_DELETED",
+        expose: true,
+      });
+    }
+
+    let resolvedPolicy: BlockDeleteCtx["resolvedPolicy"];
+    if (this.config.policyService) {
+      resolvedPolicy = await this.config.policyService.resolve(
+        block.authorId,
+        block.conversationId,
+        block.threadParentId ?? undefined
+      );
+      if (resolvedPolicy.canDeleteOwnBlocks === false) {
+        throw new BlockRefusedError("Deleting own blocks is not allowed", {
+          code: "CANNOT_DELETE_OWN_BLOCKS",
+          expose: true,
+        });
+      }
+    }
 
     const conversation = await this.config.adapter.conversations.find(block.conversationId);
     const author = await this.config.adapter.chatters.find(block.authorId);
 
     if (conversation && author) {
-      const ctx: BlockDeleteCtx = { block, conversation, author };
+      const ctx: BlockDeleteCtx = {
+        block,
+        conversation,
+        author,
+        resolvedPolicy,
+        authorCanDelete: resolvedPolicy ? !!resolvedPolicy.canDeleteOwnBlocks : undefined,
+      };
       const outcomes = createDeleteOutcomes();
       const result = this.config.hooks?.onBlockBeforeDelete
         ? await this.config.hooks.onBlockBeforeDelete(ctx, outcomes)

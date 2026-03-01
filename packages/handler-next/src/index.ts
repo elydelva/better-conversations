@@ -8,9 +8,16 @@ import type { NextRequest } from "next/server";
 
 export interface CreateNextHandlerOptions {
   basePath?: string;
+  /** Returns the authenticated chatter ID from the request. Use getServerSession, JWT, etc. */
+  getCurrentChatter?: (req: NextRequest) => Promise<string | null> | string | null;
+  /** If true, return 401 when getCurrentChatter returns null */
+  requireAuth?: boolean;
 }
 
-async function toCoreRequest(req: NextRequest): Promise<CoreRequest> {
+async function toCoreRequest(
+  req: NextRequest,
+  options?: CreateNextHandlerOptions
+): Promise<CoreRequest> {
   const url = req.nextUrl ?? new URL(req.url);
   const path = url.pathname;
   const query: Record<string, string> = {};
@@ -23,13 +30,22 @@ async function toCoreRequest(req: NextRequest): Promise<CoreRequest> {
     body = parseJsonBody(await req.text());
   }
 
-  return {
+  const coreReq: CoreRequest = {
     method: req.method,
     path,
     params: {},
     query,
     body,
   };
+
+  if (options?.getCurrentChatter) {
+    const chatterId = await Promise.resolve(options.getCurrentChatter(req));
+    if (chatterId) {
+      coreReq.auth = { chatterId };
+    }
+  }
+
+  return coreReq;
 }
 
 function toNextResponse(
@@ -55,7 +71,10 @@ async function handle(
   options: CreateNextHandlerOptions
 ): Promise<Response> {
   const basePath = options.basePath ?? "";
-  const coreReq = await toCoreRequest(req);
+  const coreReq = await toCoreRequest(req, options);
+  if (options?.requireAuth && options?.getCurrentChatter && !coreReq.auth) {
+    return new Response(null, { status: 401 });
+  }
   const coreRes = await dispatch(engine, coreReq, basePath);
   return toNextResponse(coreRes.status, coreRes.body, {
     stream: coreRes.stream,

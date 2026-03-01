@@ -16,7 +16,6 @@ export async function getEngine(): Promise<ConversationEngine> {
     engine = betterConversation({
       adapter,
       audit: { store: createInMemoryAuditStore() },
-      policies: {},
       plugins: [
         createSsePlugin(),
         createPresencePlugin(),

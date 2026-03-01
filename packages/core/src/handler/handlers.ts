@@ -3,6 +3,7 @@ import {
   ConversationNotFoundError,
   ParticipantNotFoundError,
   ParticipantValidationError,
+  PermissionDeniedError,
   PolicyNotImplementedError,
 } from "@better-conversation/errors";
 import type { ConversationEngine } from "../engine.js";
@@ -11,6 +12,12 @@ import { successResponse } from "./utils.js";
 
 function body<T>(req: CoreRequest): T {
   return req.body as T;
+}
+
+function requireAuthMatch(req: CoreRequest, expectedChatterId: string): void {
+  if (req.auth && req.auth.chatterId !== expectedChatterId) {
+    throw new PermissionDeniedError("caller_must_match_actor", expectedChatterId);
+  }
 }
 
 export const handleChattersCreate: RouteHandler = async ({ engine, req }) => {
@@ -62,6 +69,7 @@ export const handleChattersList: RouteHandler = async ({ engine, req }) => {
 
 export const handleChatterConversations: RouteHandler = async ({ engine, req }) => {
   const chatterId = req.params.id;
+  requireAuthMatch(req, chatterId);
   const limit = req.query.limit ? Number.parseInt(req.query.limit, 10) : 50;
   const cursor = req.query.cursor;
   const result = await engine.conversations.list({
@@ -82,6 +90,7 @@ export const handleConversationsCreate: RouteHandler = async ({ engine, req }) =
     metadata?: Record<string, unknown>;
     participants?: Array<{ chatterId: string; role: string }>;
   }>(req);
+  requireAuthMatch(req, data.createdBy);
   const conv = await engine.conversations.create({
     title: data.title ?? null,
     status: (data.status as "open" | "archived" | "locked") ?? "open",
@@ -232,6 +241,7 @@ export const handleBlocksSend: RouteHandler = async ({ engine, req }) => {
     metadata?: Record<string, unknown>;
     threadParentId?: string;
   }>(req);
+  requireAuthMatch(req, data.authorId);
   const block = await engine.blocks.send({
     conversationId,
     authorId: data.authorId,
@@ -244,18 +254,25 @@ export const handleBlocksSend: RouteHandler = async ({ engine, req }) => {
 };
 
 export const handleBlocksUpdateMeta: RouteHandler = async ({ engine, req }) => {
-  const conversationId = req.params.id;
   const blockId = req.params.blockId;
   const data = body<{
     body?: string;
     metadata?: Record<string, unknown>;
   }>(req);
+  const existing = await engine.blocks.find(blockId);
+  if (existing) {
+    requireAuthMatch(req, existing.authorId);
+  }
   const block = await engine.blocks.updateMeta(blockId, data);
   return successResponse(block);
 };
 
 export const handleBlocksDelete: RouteHandler = async ({ engine, req }) => {
   const blockId = req.params.blockId;
+  const block = await engine.blocks.find(blockId);
+  if (block) {
+    requireAuthMatch(req, block.authorId);
+  }
   await engine.blocks.delete(blockId);
   return successResponse(null, 204);
 };
@@ -285,6 +302,7 @@ export const handlePoliciesSetRole: RouteHandler = async ({ engine, req }) => {
 
 export const handlePoliciesResolve: RouteHandler = async ({ engine, req }) => {
   const chatterId = req.params.chatterId;
+  requireAuthMatch(req, chatterId);
   const conversationId = req.query.conversationId;
   const threadParentBlockId = req.query.threadParentBlockId;
   const resolved = await engine.policies.resolve(chatterId, conversationId, threadParentBlockId);
@@ -293,6 +311,7 @@ export const handlePoliciesResolve: RouteHandler = async ({ engine, req }) => {
 
 export const handlePoliciesSetChatter: RouteHandler = async ({ engine, req }) => {
   const chatterId = req.params.chatterId;
+  requireAuthMatch(req, chatterId);
   const data = body<Record<string, unknown>>(req);
   await engine.policies.setChatter(chatterId, data);
   return successResponse(null, 204);

@@ -1,11 +1,17 @@
 import type { ConversationEngine } from "../engine.js";
 
+export interface RequestAuth {
+  chatterId: string;
+}
+
 export interface CoreRequest {
   method: string;
   path: string;
   params: Record<string, string>;
   query: Record<string, string>;
   body: unknown;
+  /** Populated by handler adapters via getCurrentChatter; used for authorization */
+  auth?: RequestAuth;
 }
 
 export interface CoreResponse {

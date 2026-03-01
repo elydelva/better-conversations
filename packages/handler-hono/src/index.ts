@@ -8,6 +8,10 @@ import type { Context } from "hono";
 
 export interface CreateHonoHandlerOptions {
   basePath?: string;
+  /** Returns the authenticated chatter ID from the request. Use session, JWT, etc. */
+  getCurrentChatter?: (c: Context) => Promise<string | null> | string | null;
+  /** If true, return 401 when getCurrentChatter returns null */
+  requireAuth?: boolean;
 }
 
 function queryToRecord(q: Record<string, string | string[] | undefined>): Record<string, string> {
@@ -20,7 +24,7 @@ function queryToRecord(q: Record<string, string | string[] | undefined>): Record
   return out;
 }
 
-async function toCoreRequest(c: Context): Promise<CoreRequest> {
+async function toCoreRequest(c: Context, options?: CreateHonoHandlerOptions): Promise<CoreRequest> {
   const path = c.req.path;
   const query = queryToRecord(c.req.query() as Record<string, string | string[] | undefined>);
 
@@ -30,20 +34,32 @@ async function toCoreRequest(c: Context): Promise<CoreRequest> {
     body = parseJsonBody(raw || null);
   }
 
-  return {
+  const coreReq: CoreRequest = {
     method: c.req.method,
     path,
     params: {},
     query,
     body,
   };
+
+  if (options?.getCurrentChatter) {
+    const chatterId = await Promise.resolve(options.getCurrentChatter(c));
+    if (chatterId) {
+      coreReq.auth = { chatterId };
+    }
+  }
+
+  return coreReq;
 }
 
 export function createHonoHandler(engine: ConversationEngine, options?: CreateHonoHandlerOptions) {
   const basePath = options?.basePath ?? "";
 
   return async (c: Context) => {
-    const coreReq = await toCoreRequest(c);
+    const coreReq = await toCoreRequest(c, options);
+    if (options?.requireAuth && options?.getCurrentChatter && !coreReq.auth) {
+      return c.body(null, 401);
+    }
     const coreRes = await dispatch(engine, coreReq, basePath);
 
     if (coreRes.stream) {

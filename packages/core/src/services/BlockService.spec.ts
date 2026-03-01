@@ -264,6 +264,103 @@ describe("BlockService", () => {
     ).rejects.toThrow(BlockRateLimitError);
   });
 
+  test("delete throws BlockRefusedError when block is already deleted", async () => {
+    const block = createMockBlock({ id: "b1", status: "deleted" });
+    const blocks = {
+      find: async () => block,
+      list: async () => ({ items: [], total: 0, hasMore: false }),
+      create: async () => createMockBlock(),
+      update: async () => createMockBlock(),
+      softDelete: async () => {},
+    };
+    const adapter = { ...baseAdapter, blocks };
+    const service = new BlockService({ adapter });
+
+    await expect(service.delete("b1")).rejects.toThrow(BlockRefusedError);
+  });
+
+  test("delete throws BlockRefusedError when canDeleteOwnBlocks is false", async () => {
+    const block = createMockBlock({ id: "b1" });
+    const blocks = {
+      find: async () => block,
+      list: async () => ({ items: [], total: 0, hasMore: false }),
+      create: async () => createMockBlock(),
+      update: async () => createMockBlock(),
+      softDelete: async () => {},
+    };
+    const observerRole = defaultRoleRegistry.observer;
+    if (!observerRole) throw new Error("Observer role must exist in default registry");
+    const adapter = {
+      ...baseAdapter,
+      blocks,
+      participants: {
+        ...baseAdapter.participants,
+        find: async () => createMockParticipant({ role: "observer" }),
+      },
+    };
+    const policyService = new (await import("./PolicyService.js")).PolicyService({
+      adapter,
+      roleRegistry: {
+        ...defaultRoleRegistry,
+        observer: {
+          ...observerRole,
+          policy: { ...observerRole.policy, canDeleteOwnBlocks: false },
+        },
+      },
+    });
+    const service = new BlockService({ adapter, policyService });
+
+    await expect(service.delete("b1")).rejects.toThrow(BlockRefusedError);
+  });
+
+  test("updateMeta throws BlockRefusedError when editWindowSeconds exceeded", async () => {
+    const oldDate = new Date(Date.now() - 400_000); // > 300s ago
+    const block = createMockBlock({ id: "b1", createdAt: oldDate });
+    const blocks = {
+      find: async () => block,
+      list: async () => ({ items: [], total: 0, hasMore: false }),
+      create: async () => createMockBlock(),
+      update: async () => createMockBlock(),
+      softDelete: async () => {},
+    };
+    const policyService = new (await import("./PolicyService.js")).PolicyService({
+      adapter: { ...baseAdapter, blocks },
+      roleRegistry: defaultRoleRegistry,
+    });
+    const service = new BlockService({
+      adapter: { ...baseAdapter, blocks },
+      policyService,
+    });
+
+    await expect(service.updateMeta("b1", { body: "updated" })).rejects.toThrow(BlockRefusedError);
+  });
+
+  test("updateMeta throws BlockRefusedError when canEditOwnBlocks is false", async () => {
+    const block = createMockBlock({ id: "b1" });
+    const blocks = {
+      find: async () => block,
+      list: async () => ({ items: [], total: 0, hasMore: false }),
+      create: async () => createMockBlock(),
+      update: async () => createMockBlock(),
+      softDelete: async () => {},
+    };
+    const adapter = {
+      ...baseAdapter,
+      blocks,
+      participants: {
+        ...baseAdapter.participants,
+        find: async () => createMockParticipant({ role: "bot" }),
+      },
+    };
+    const policyService = new (await import("./PolicyService.js")).PolicyService({
+      adapter,
+      roleRegistry: defaultRoleRegistry,
+    });
+    const service = new BlockService({ adapter, policyService });
+
+    await expect(service.updateMeta("b1", { body: "updated" })).rejects.toThrow(BlockRefusedError);
+  });
+
   test("send throws ChatterNotFoundError when author not found", async () => {
     const adapter = createMockAdapter({
       conversations: baseAdapter.conversations,

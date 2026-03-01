@@ -50,11 +50,12 @@ onBlockAfterSend: async (ctx) => {
 
 ### onBlockBeforeDelete
 
-**When:** Before a block is soft-deleted (status → deleted). **Context:** `block`, `conversation`, `author`. **Outcomes:** `next`, `refuse`. **Usage:** Check permissions (e.g. authorCanDelete), prevent deletion by policy.
+**When:** Before a block is soft-deleted (status → deleted). **Context:** `block`, `conversation`, `author`, `resolvedPolicy` (if policy is configured), `authorCanDelete` (boolean from resolved policy). **Outcomes:** `next`, `refuse`. **Usage:** Additional checks beyond policy (e.g. moderation, custom rules). The core already enforces `canDeleteOwnBlocks` and blocks double-delete before the hook runs.
 
 ```ts title="lib/conversation.ts"
 onBlockBeforeDelete: async (ctx, outcomes) => {
-  if (!ctx.authorCanDelete) return outcomes.refuse("Cannot delete");
+  // Policy canDeleteOwnBlocks is already enforced by the core
+  if (ctx.authorCanDelete === false) return outcomes.refuse("Cannot delete");
   return outcomes.next();
 }
 ```

@@ -65,6 +65,34 @@ describe("dispatch", () => {
     expect((res.body as { roles: string[] }).roles).toContain("member");
   });
 
+  test("auth: when req.auth.chatterId does not match params.chatterId, returns 403", async () => {
+    const engine = betterConversation({ adapter: createMockAdapter() });
+    const req = {
+      method: "GET",
+      path: "/policies/chatters/ch1",
+      params: { chatterId: "ch1" },
+      query: {},
+      body: null,
+      auth: { chatterId: "ch_other" },
+    };
+    const res = await dispatch(engine, req);
+    expect(res.status).toBe(403);
+  });
+
+  test("auth: when req.auth.chatterId matches params.chatterId, returns 200", async () => {
+    const engine = betterConversation({ adapter: createMockAdapter() });
+    const req = {
+      method: "GET",
+      path: "/policies/chatters/ch1",
+      params: { chatterId: "ch1" },
+      query: {},
+      body: null,
+      auth: { chatterId: "ch1" },
+    };
+    const res = await dispatch(engine, req);
+    expect(res.status).toBe(200);
+  });
+
   test("strips basePath before matching", async () => {
     const adapter = createMockAdapter({
       conversations: {

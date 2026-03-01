@@ -8,6 +8,10 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 
 export interface CreateFastifyHandlerOptions {
   basePath?: string;
+  /** Returns the authenticated chatter ID from the request. Use session, JWT, etc. */
+  getCurrentChatter?: (req: FastifyRequest) => Promise<string | null> | string | null;
+  /** If true, return 401 when getCurrentChatter returns null */
+  requireAuth?: boolean;
 }
 
 function queryToRecord(q: FastifyRequest["query"]): Record<string, string> {
@@ -25,7 +29,10 @@ function getPath(req: FastifyRequest): string {
   return url.includes("?") ? url.slice(0, url.indexOf("?")) : url;
 }
 
-async function toCoreRequest(req: FastifyRequest): Promise<CoreRequest> {
+async function toCoreRequest(
+  req: FastifyRequest,
+  options?: CreateFastifyHandlerOptions
+): Promise<CoreRequest> {
   const path = getPath(req);
   const query = queryToRecord(req.query);
 
@@ -37,13 +44,22 @@ async function toCoreRequest(req: FastifyRequest): Promise<CoreRequest> {
         : parseJsonBody(req.body != null ? String(req.body) : null);
   }
 
-  return {
+  const coreReq: CoreRequest = {
     method: req.method,
     path,
     params: {},
     query,
     body,
   };
+
+  if (options?.getCurrentChatter) {
+    const chatterId = await Promise.resolve(options.getCurrentChatter(req));
+    if (chatterId) {
+      coreReq.auth = { chatterId };
+    }
+  }
+
+  return coreReq;
 }
 
 async function sendResponse(
@@ -91,8 +107,13 @@ export function createFastifyHandler(
   ): Promise<void> {
     const basePath = basePathFromOptions || opts?.prefix || "";
 
+    const handlerOptions = options ?? {};
     const handler = async (req: FastifyRequest, reply: FastifyReply): Promise<void> => {
-      const coreReq = await toCoreRequest(req);
+      const coreReq = await toCoreRequest(req, handlerOptions);
+      if (handlerOptions.requireAuth && handlerOptions.getCurrentChatter && !coreReq.auth) {
+        await reply.status(401).send();
+        return;
+      }
       const coreRes = await dispatch(engine, coreReq, basePath);
       await sendResponse(reply, coreRes.status, coreRes.body, {
         stream: coreRes.stream,

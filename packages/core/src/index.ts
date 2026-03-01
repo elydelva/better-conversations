@@ -124,6 +124,7 @@ export {
 export type {
   CoreRequest,
   CoreResponse,
+  RequestAuth,
   RouteHandler,
   Route,
   PathMatch,

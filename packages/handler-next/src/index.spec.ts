@@ -231,4 +231,38 @@ describe("createNextHandler", () => {
       expect(json.canJoinSelf).toBe(false);
     });
   });
+
+  describe("auth: getCurrentChatter", () => {
+    test("when auth matches params, request succeeds", async () => {
+      const handler = createNextHandler(engine, {
+        getCurrentChatter: async () => "ch1",
+      });
+      const req = await createRequest("http://localhost/policies/chatters/ch1");
+      const res = await handler.GET(req);
+      expect(res.status).toBe(200);
+    });
+
+    test("when auth does not match params, returns 403", async () => {
+      const handler = createNextHandler(engine, {
+        getCurrentChatter: async () => "ch_other",
+      });
+      const req = await createRequest("http://localhost/policies/chatters/ch1");
+      const res = await handler.GET(req);
+      expect(res.status).toBe(403);
+      const json = await res.json();
+      expect(json).toMatchObject({ code: "FORBIDDEN" });
+    });
+  });
+
+  describe("auth: requireAuth", () => {
+    test("when requireAuth and getCurrentChatter returns null, returns 401", async () => {
+      const handler = createNextHandler(engine, {
+        getCurrentChatter: async () => null,
+        requireAuth: true,
+      });
+      const req = await createRequest("http://localhost/policies/chatters/ch1");
+      const res = await handler.GET(req);
+      expect(res.status).toBe(401);
+    });
+  });
 });
