@@ -1,4 +1,5 @@
 import type { DatabaseAdapter } from "../adapter/index.js";
+import type { AuditStore } from "../audit/index.js";
 import type { ConversationHooks } from "../hooks/index.js";
 import type { PolicyConfig } from "../policy/index.js";
 import type { BlockRegistry, RoleRegistry } from "../registry/index.js";
@@ -11,6 +12,8 @@ export interface ConversationConfig<
   TRoles extends RoleRegistry = RoleRegistry,
 > {
   adapter: DatabaseAdapter;
+  /** When provided, core appends audit entries for block:created and conversation:created */
+  audit?: { store: AuditStore };
   additionalBlocks?: TBlocks;
   additionalRoles?: TRoles;
   hooks?: ConversationHooks<TBlocks, TRoles>;

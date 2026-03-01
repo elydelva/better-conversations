@@ -1,6 +1,8 @@
 import type { ConversationConfig } from "./config/index.js";
 import type { Route } from "./handler/routes.js";
 import { buildRoutes } from "./handler/routes.js";
+import type { BlockAfterSendCtx } from "./hooks/BlockAfterSend.js";
+import type { ConversationAfterCreateCtx } from "./hooks/ConversationAfterCreate.js";
 import { defaultBlockRegistry } from "./registry/defaultBlockRegistry.js";
 import { defaultRoleRegistry } from "./registry/defaultRoleRegistry.js";
 import type { BlockRegistry, RoleRegistry } from "./registry/index.js";
@@ -31,15 +33,20 @@ export class ConversationEngine<
   readonly policies: PolicyService;
 
   private _initDone = false;
+  private readonly _hooks: NonNullable<ConversationConfig<TBlocks, TRoles>["hooks"]>;
 
   constructor(private readonly config: ConversationConfig<TBlocks, TRoles>) {
     const { adapter, generateId } = config;
 
-    const mergedHooks = this.mergeHooks();
-    const hooks = mergedHooks;
+    this._hooks = this.mergeHooks();
+    const hooks = this._hooks;
 
     this.chatters = new ChatterService(adapter.chatters);
-    this.conversations = new ConversationService(adapter.conversations);
+    this.conversations = new ConversationService({
+      conversations: adapter.conversations,
+      hooks: hooks ? { onConversationAfterCreate: hooks.onConversationAfterCreate } : undefined,
+      engine: this,
+    });
     this.participants = new ParticipantService({
       participants: adapter.participants,
       roleRegistry: { ...defaultRoleRegistry, ...config.additionalRoles },
@@ -52,11 +59,14 @@ export class ConversationEngine<
     this.blocks = new BlockService({
       adapter,
       policyService: this.policies,
+      engine: this,
       hooks: hooks
         ? {
             onBlockBeforeSend: hooks.onBlockBeforeSend,
             onBlockAfterSend: hooks.onBlockAfterSend,
             onBlockBeforeDelete: hooks.onBlockBeforeDelete,
+            onBlockBeforeUpdate: hooks.onBlockBeforeUpdate,
+            onBlockAfterUpdate: hooks.onBlockAfterUpdate,
           }
         : undefined,
       generateId,
@@ -66,14 +76,58 @@ export class ConversationEngine<
     this.attachPluginServices();
   }
 
-  private mergeHooks(): ConversationConfig<TBlocks, TRoles>["hooks"] {
+  private mergeHooks(): NonNullable<ConversationConfig<TBlocks, TRoles>["hooks"]> {
     let merged = this.config.hooks ?? {};
     for (const plugin of this.config.plugins ?? []) {
       if (plugin.hooks) {
         merged = { ...merged, ...plugin.hooks };
       }
     }
+    merged = this.mergeAuditHooks(merged);
     return merged;
+  }
+
+  private mergeAuditHooks(
+    hooks: NonNullable<ConversationConfig<TBlocks, TRoles>["hooks"]>
+  ): NonNullable<ConversationConfig<TBlocks, TRoles>["hooks"]> {
+    const store = this.config.audit?.store;
+    if (!store) return hooks;
+
+    const composeBlockAfter = async (ctx: BlockAfterSendCtx) => {
+      if (hooks?.onBlockAfterSend) await hooks.onBlockAfterSend(ctx);
+      await store.append({
+        event: "block:created",
+        entityType: "block",
+        entityId: ctx.block.id,
+        payload: {
+          conversationId: ctx.block.conversationId,
+          authorId: ctx.block.authorId,
+          type: ctx.block.type,
+          body: ctx.block.body,
+          metadata: ctx.block.metadata,
+        },
+      });
+    };
+
+    const composeConvAfter = async (ctx: ConversationAfterCreateCtx) => {
+      if (hooks?.onConversationAfterCreate) await hooks.onConversationAfterCreate(ctx);
+      await store.append({
+        event: "conversation:created",
+        entityType: "conversation",
+        entityId: ctx.conversation.id,
+        payload: {
+          createdBy: ctx.conversation.createdBy,
+          title: ctx.conversation.title,
+          status: ctx.conversation.status,
+        },
+      });
+    };
+
+    return {
+      ...hooks,
+      onBlockAfterSend: composeBlockAfter,
+      onConversationAfterCreate: composeConvAfter,
+    };
   }
 
   private attachPluginServices(): void {
@@ -93,6 +147,10 @@ export class ConversationEngine<
 
   getPlugin<T>(name: string): T | undefined {
     return (this as Record<string, unknown>)[name] as T | undefined;
+  }
+
+  getHooks(): ConversationConfig<TBlocks, TRoles>["hooks"] {
+    return this._hooks;
   }
 
   async init(): Promise<void> {

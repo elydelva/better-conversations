@@ -60,6 +60,8 @@ export type {
   BlockBeforeSendCtx,
   BlockAfterSendCtx,
   BlockDeleteCtx,
+  BlockBeforeUpdateCtx,
+  BlockAfterUpdateCtx,
   BlockOutcomes,
   DeleteOutcomes,
   HookResult,
@@ -87,6 +89,9 @@ export type {
 
 export type { CreateBlockOptions, BlockHookConfig } from "./block/index.js";
 export type { CreateRoleOptions } from "./role/index.js";
+
+export { createInMemoryAuditStore } from "./audit/index.js";
+export type { AuditStore, AuditEntry, AuditQueryFilters } from "./audit/index.js";
 
 export {
   baseSchemaContribution,

@@ -1,5 +1,7 @@
 import { ConversationArchivedError, ConversationNotFoundError } from "@better-conversation/errors";
 import type { ConversationAdapter } from "../adapter/index.js";
+import type { ConversationEngine } from "../engine.js";
+import type { ConversationAfterCreateCtx } from "../hooks/ConversationAfterCreate.js";
 import type {
   Conversation,
   ConversationFilters,
@@ -7,8 +9,28 @@ import type {
   Paginated,
 } from "../types/index.js";
 
+export interface ConversationServiceConfig {
+  conversations: ConversationAdapter;
+  hooks?: { onConversationAfterCreate?: (ctx: ConversationAfterCreateCtx) => Promise<void> };
+  engine?: ConversationEngine;
+}
+
 export class ConversationService {
-  constructor(private readonly conversations: ConversationAdapter) {}
+  constructor(private readonly config: ConversationAdapter | ConversationServiceConfig) {
+    if ("conversations" in config) {
+      this.conversations = config.conversations;
+      this.hooks = config.hooks;
+      this.engine = config.engine;
+    } else {
+      this.conversations = config;
+      this.hooks = undefined;
+      this.engine = undefined;
+    }
+  }
+
+  private readonly conversations: ConversationAdapter;
+  private readonly hooks?: ConversationServiceConfig["hooks"];
+  private readonly engine?: ConversationEngine;
 
   async find(id: string): Promise<Conversation | null> {
     return this.conversations.find(id);
@@ -23,7 +45,12 @@ export class ConversationService {
   }
 
   async create(data: ConversationInput): Promise<Conversation> {
-    return this.conversations.create(data);
+    const conv = await this.conversations.create(data);
+    if (this.hooks?.onConversationAfterCreate && this.engine) {
+      const participants = await this.engine.participants.list(conv.id);
+      await this.hooks.onConversationAfterCreate({ conversation: conv, participants });
+    }
+    return conv;
   }
 
   async update(id: string, data: Partial<Conversation>): Promise<Conversation> {

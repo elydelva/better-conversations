@@ -157,6 +157,22 @@ export const handleParticipantsAdd: RouteHandler = async ({ engine, req }) => {
     chatterId: data.chatterId,
     role: data.role,
   });
+  const hooks = engine.getHooks();
+  if (hooks?.onParticipantAfterJoin) {
+    const conversation = await engine.conversations.find(conversationId);
+    const chatter = await engine.chatters.find(data.chatterId);
+    const participants = await engine.participants.list(conversationId);
+    if (conversation && chatter) {
+      await hooks.onParticipantAfterJoin({
+        conversation,
+        chatter,
+        role: data.role,
+        participants,
+        participant,
+        engine,
+      });
+    }
+  }
   return successResponse(participant, 201);
 };
 
@@ -169,13 +185,6 @@ export const handleParticipantsRemove: RouteHandler = async ({ engine, req }) =>
   }
   await engine.participants.remove(participant.id);
   return successResponse(null, 204);
-};
-
-export const handleParticipantsMarkRead: RouteHandler = async ({ engine, req }) => {
-  const conversationId = req.params.id;
-  const chatterId = req.params.chatterId;
-  const participant = await engine.participants.markRead(conversationId, chatterId);
-  return successResponse(participant);
 };
 
 export const handleParticipantsSetRole: RouteHandler = async ({ engine, req }) => {
