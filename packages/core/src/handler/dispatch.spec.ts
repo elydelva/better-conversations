@@ -93,6 +93,35 @@ describe("dispatch", () => {
     expect(res.status).toBe(200);
   });
 
+  test("POST /chatters with invalid body returns 400 ValidationError", async () => {
+    const engine = betterConversation({ adapter: createMockAdapter() });
+    const req = {
+      method: "POST",
+      path: "/chatters",
+      params: {},
+      query: {},
+      body: { displayName: "", entityType: "user" },
+    };
+    const res = await dispatch(engine, req);
+    expect(res.status).toBe(400);
+    expect(res.body).toMatchObject({ code: "VALIDATION_ERROR", message: expect.any(String) });
+  });
+
+  test("POST /chatters with valid body returns 201", async () => {
+    const engine = betterConversation({ adapter: createMockAdapter() });
+    const req = {
+      method: "POST",
+      path: "/chatters",
+      params: {},
+      query: {},
+      body: { displayName: "Test", entityType: "user" },
+    };
+    const res = await dispatch(engine, req);
+    expect(res.status).toBe(201);
+    expect(res.body).toHaveProperty("id");
+    expect(res.body).toHaveProperty("displayName");
+  });
+
   test("strips basePath before matching", async () => {
     const adapter = createMockAdapter({
       conversations: {

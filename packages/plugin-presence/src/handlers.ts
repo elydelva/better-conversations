@@ -2,6 +2,7 @@ import type { ConversationEngine } from "@better-conversation/core";
 import type { RouteHandler } from "@better-conversation/core";
 import { successResponse } from "@better-conversation/core";
 import type { PresenceService } from "./PresenceService.js";
+import { parseTypingBody } from "./schemas.js";
 
 function getPresence(engine: ConversationEngine): PresenceService {
   const presence = engine.getPlugin<PresenceService>("presence");
@@ -21,8 +22,7 @@ export const handleParticipantsMarkRead: RouteHandler = async ({ engine, req }) 
 export const handleParticipantsTyping: RouteHandler = async ({ engine, req }) => {
   const conversationId = req.params.id;
   const chatterId = req.params.chatterId;
-  const body = req.body as { until?: string } | null;
-  const untilMs = body?.until ? Number.parseInt(String(body.until), 10) : 5000;
+  const { untilMs } = parseTypingBody(req.body);
   const until = new Date(Date.now() + untilMs);
   await getPresence(engine).setTyping(conversationId, chatterId, until);
   return successResponse(null, 204);

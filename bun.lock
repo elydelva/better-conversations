@@ -194,6 +194,7 @@
       "version": "1.0.0",
       "dependencies": {
         "@better-conversation/errors": "workspace:*",
+        "@better-conversation/schema": "workspace:*",
         "@better-conversation/types": "workspace:*",
       },
       "devDependencies": {
@@ -425,6 +426,17 @@
         "typescript": "catalog:",
       },
     },
+    "packages/schema": {
+      "name": "@better-conversation/schema",
+      "version": "1.0.0",
+      "dependencies": {
+        "@better-conversation/errors": "workspace:*",
+        "zod": "^4.3.6",
+      },
+      "devDependencies": {
+        "typescript": "catalog:",
+      },
+    },
     "packages/types": {
       "name": "@better-conversation/types",
       "version": "1.0.0",
@@ -499,6 +511,8 @@
     "@better-conversation/react": ["@better-conversation/react@workspace:packages/react"],
 
     "@better-conversation/roles": ["@better-conversation/roles@workspace:packages/roles"],
+
+    "@better-conversation/schema": ["@better-conversation/schema@workspace:packages/schema"],
 
     "@better-conversation/types": ["@better-conversation/types@workspace:packages/types"],
 
