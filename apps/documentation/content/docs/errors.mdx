@@ -1,0 +1,220 @@
+---
+title: Error Reference
+description: ConversationError codes — JSON with code, message; use isConversationError() to detect.
+---
+
+## Error Response Format
+
+```json title="error-response.json"
+{
+  "code": "ERROR_CODE",
+  "message": "Human-readable message",
+  "retryAfter": 60
+}
+```
+
+---
+
+## Chatter Errors
+
+### ChatterNotFoundError
+
+| Property | Value |
+|----------|-------|
+| **Code** | `CHATTER_NOT_FOUND` |
+| **Status** | 404 |
+| **When thrown** | GET /chatters/:id when chatter does not exist; or when resolving chatter by entityType/entityId and no match found |
+| **Metadata** | `{ id?: string }` or `{ entityType: string, entityId: string }` |
+
+<Callout type="info" title="Example">
+```
+Chatter not found: abc-123
+```
+or
+```
+Chatter not found for user:user-456
+```
+</Callout>
+
+### ChatterValidationError
+
+| Property | Value |
+|----------|-------|
+| **Code** | `CHATTER_VALIDATION_ERROR` |
+| **Status** | 400 |
+| **When thrown** | POST/PATCH /chatters when request body fails validation (missing required fields, invalid types) |
+| **Metadata** | `{ field?: string }` |
+
+<Callout type="info" title="Example">
+```
+Invalid display name
+```
+</Callout>
+
+---
+
+## Conversation Errors
+
+### ConversationNotFoundError
+
+| Property | Value |
+|----------|-------|
+| **Code** | `CONVERSATION_NOT_FOUND` |
+| **Status** | 404 |
+| **When thrown** | GET/PATCH/DELETE /conversations/:id when conversation does not exist |
+| **Metadata** | `{ id?: string }` |
+
+### ConversationArchivedError
+
+| Property | Value |
+|----------|-------|
+| **Code** | `CONV_ARCHIVED` |
+| **Status** | 403 |
+| **When thrown** | Attempting to send blocks, add participants, or modify an archived conversation |
+| **Metadata** | `{ id: string }` |
+
+<Callout type="warn" title="Note">
+Archived conversations are read-only. Use PATCH to change status back to `open` if your policy allows it.
+</Callout>
+
+### ConversationValidationError
+
+| Property | Value |
+|----------|-------|
+| **Code** | `CONVERSATION_VALIDATION_ERROR` |
+| **Status** | 400 |
+| **When thrown** | POST/PATCH /conversations when request body fails validation |
+| **Metadata** | `{ field?: string }` |
+
+---
+
+## Participant Errors
+
+### ParticipantNotFoundError
+
+| Property | Value |
+|----------|-------|
+| **Code** | `PARTICIPANT_NOT_FOUND` |
+| **Status** | 404 |
+| **When thrown** | PATCH/DELETE /conversations/:id/participants/:chatterId when participant is not in the conversation |
+| **Metadata** | `{ conversationId: string, chatterId: string }` |
+
+### ParticipantAlreadyJoinedError
+
+| Property | Value |
+|----------|-------|
+| **Code** | `PARTICIPANT_ALREADY_JOINED` |
+| **Status** | 409 |
+| **When thrown** | POST /conversations/:id/participants when chatter is already a participant |
+| **Metadata** | `{ conversationId: string, chatterId: string }` |
+
+### ParticipantValidationError
+
+| Property | Value |
+|----------|-------|
+| **Code** | `PARTICIPANT_VALIDATION_ERROR` |
+| **Status** | 400 |
+| **When thrown** | POST/PATCH participants when request body fails validation (e.g. invalid role) |
+| **Metadata** | `{ field?: string }` |
+
+---
+
+## Block Errors
+
+### BlockNotFoundError
+
+| Property | Value |
+|----------|-------|
+| **Code** | `BLOCK_NOT_FOUND` |
+| **Status** | 404 |
+| **When thrown** | GET/PATCH/DELETE /conversations/:id/blocks/:blockId when block does not exist |
+| **Metadata** | `{ id: string }` |
+
+### BlockRefusedError
+
+| Property | Value |
+|----------|-------|
+| **Code** | `BLOCK_REFUSED` (or custom via options) |
+| **Status** | 403 |
+| **When thrown** | A hook returns `refuse()` — e.g. moderation, policy check, or custom validation |
+| **Retry** | `retryAfter` (seconds) when provided |
+| **Metadata** | None by default; hooks may attach custom metadata |
+
+<Callout type="warn" title="Custom code">
+Hooks can pass a custom `code` when calling `refuse()`. Check `code` in the response to distinguish refusal reasons.
+</Callout>
+
+### BlockValidationError
+
+| Property | Value |
+|----------|-------|
+| **Code** | `BLOCK_VALIDATION_ERROR` |
+| **Status** | 400 |
+| **When thrown** | POST/PATCH /conversations/:id/blocks when request body fails validation (invalid type, missing body, schema mismatch) |
+| **Metadata** | `{ field?: string }` |
+
+### BlockRateLimitError
+
+| Property | Value |
+|----------|-------|
+| **Code** | `RATE_LIMIT` |
+| **Status** | 429 |
+| **When thrown** | Rate limit hook or middleware rejects the request |
+| **Retry** | `retryAfter` (seconds) — client should wait before retrying |
+
+<Callout type="info" title="Retry">
+If `retryAfter` is present, retry the request after that many seconds.
+</Callout>
+
+---
+
+## Permission Errors
+
+### PermissionDeniedError
+
+| Property | Value |
+|----------|-------|
+| **Code** | `FORBIDDEN` |
+| **Status** | 403 |
+| **When thrown** | Policy engine denies the action (e.g. chatter cannot send blocks, read conversation, or modify participants) |
+| **Metadata** | `{ action: string, scope?: string }` |
+
+<Callout type="info" title="Example">
+```
+Permission denied: blocks.send (conversation:abc-123)
+```
+</Callout>
+
+---
+
+## Policy Errors
+
+### PolicyNotImplementedError
+
+| Property | Value |
+|----------|-------|
+| **Code** | `NOT_IMPLEMENTED` |
+| **Status** | 501 |
+| **When thrown** | PolicyService method not implemented (e.g. custom policy adapter missing a required method) |
+| **Metadata** | `{ method: string }` |
+
+---
+
+## Quick Reference Table
+
+| Code | Status | Category |
+|------|--------|----------|
+| `CHATTER_NOT_FOUND` | 404 | Chatter |
+| `CHATTER_VALIDATION_ERROR` | 400 | Chatter |
+| `CONVERSATION_NOT_FOUND` | 404 | Conversation |
+| `CONV_ARCHIVED` | 403 | Conversation |
+| `CONVERSATION_VALIDATION_ERROR` | 400 | Conversation |
+| `PARTICIPANT_NOT_FOUND` | 404 | Participant |
+| `PARTICIPANT_ALREADY_JOINED` | 409 | Participant |
+| `PARTICIPANT_VALIDATION_ERROR` | 400 | Participant |
+| `BLOCK_NOT_FOUND` | 404 | Block |
+| `BLOCK_REFUSED` | 403 | Block |
+| `BLOCK_VALIDATION_ERROR` | 400 | Block |
+| `RATE_LIMIT` | 429 | Block |
+| `FORBIDDEN` | 403 | Permission |
+| `NOT_IMPLEMENTED` | 501 | Policy |

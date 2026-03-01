@@ -1,0 +1,55 @@
+---
+title: Permissions
+description: Chatter-scoped grants complementing policy — admin actions, custom scopes.
+---
+
+## Model
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `chatterId` | string | Chatter to grant |
+| `action` | string | Action name (e.g. `admin:archive`) |
+| `scope` | string \| null | Optional scope (e.g. `conversation:123`) |
+| `granted` | boolean | true = grant, false = revoke |
+
+## API
+
+### List Permissions
+
+```
+GET /chatters/:id/permissions
+```
+
+Returns all permissions for a chatter.
+
+### Grant
+
+```
+POST /chatters/:id/permissions
+Body: { action: string, scope?: string }
+```
+
+### Revoke
+
+```
+DELETE /chatters/:id/permissions/:action
+```
+
+## Usage
+
+Permissions are checked via the adapter's `PermissionAdapter`. The core does not enforce them automatically; you use them in hooks or custom logic:
+
+```ts title="example.ts"
+const hasPermission = await adapter.permissions.check(chatterId, "admin:archive", scope);
+```
+
+## Policy vs. Permissions
+
+| Policy | Permissions |
+|--------|-------------|
+| Context-based (conversation, thread) | Chatter-scoped |
+| Merged from levels | Explicit grant/revoke |
+| Built-in actions (send, edit, delete) | Custom actions |
+| Resolved per request | Checked ad hoc |
+
+Use policy for standard conversation behavior; use permissions for admin or app-specific capabilities.

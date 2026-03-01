@@ -1,0 +1,85 @@
+---
+title: Conversation
+description: Container for blocks and participants with status, entity linking, and metadata.
+---
+
+## Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | string | Unique identifier |
+| `title` | string \| null | Display title |
+| `status` | `"open"` \| `"archived"` \| `"locked"` | Conversation state |
+| `entityType` | string \| null | e.g. `"ticket"`, `"order"` |
+| `entityId` | string \| null | Your app's entity ID |
+| `createdBy` | string | Chatter ID of creator |
+| `metadata` | object \| null | Custom metadata |
+| `createdAt` | string (ISO) | Creation timestamp |
+| `updatedAt` | string (ISO) | Last update timestamp |
+
+## Status
+
+| Status | Description |
+|--------|-------------|
+| `open` | Active; participants can send blocks |
+| `archived` | Read-only; typically for closed discussions |
+| `locked` | Read-only; blocks disabled |
+
+## Create
+
+```ts title="example.ts"
+const conversation = await client.conversations.create({
+  createdBy: chatterId,
+  participants: [
+    { chatterId: creatorId, role: "owner" },
+    { chatterId: memberId, role: "member" },
+  ],
+  title: "Order #12345",
+  entityType: "order",
+  entityId: "order-12345",
+});
+```
+
+## List / Find
+
+```ts title="example.ts"
+// List with filters
+const { items } = await client.conversations.list({
+  entityType: "order",
+  entityId: "order-12345",
+  limit: 20,
+  cursor: nextCursor,
+});
+
+// Find by ID
+const conv = await client.conversations.find(conversationId);
+```
+
+## Update
+
+```ts title="example.ts"
+await client.conversations.update(conversationId, {
+  title: "Updated Title",
+  status: "archived",
+  metadata: { closedAt: new Date().toISOString() },
+});
+```
+
+## Archive
+
+```ts title="example.ts"
+await client.conversations.update(conversationId, { status: "archived" });
+// Or use DELETE /conversations/:id — archives, does not hard-delete
+```
+
+## Entity Linking
+
+Link conversations to tickets, orders, or other app entities:
+
+```ts title="example.ts"
+// Support ticket
+{ entityType: "ticket", entityId: ticket.id }
+
+// E-commerce order
+{ entityType: "order", entityId: order.id }
+```

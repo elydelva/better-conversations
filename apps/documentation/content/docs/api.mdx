@@ -1,0 +1,65 @@
+---
+title: API Reference
+description: HTTP routes relative to handler base path (e.g. /api/conversation).
+---
+
+## Chatters
+
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | /chatters | Create a chatter |
+| GET | /chatters/:id | Find chatter by ID |
+| PATCH | /chatters/:id | Update chatter |
+| GET | /chatters/:id/conversations | List chatter's conversations |
+| GET | /chatters/:id/permissions | List chatter permissions |
+| POST | /chatters/:id/permissions | Grant permission |
+| DELETE | /chatters/:id/permissions/:action | Revoke permission |
+
+## Conversations
+
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | /conversations | Create conversation |
+| GET | /conversations | List (with entityType, entityId, limit, cursor) |
+| GET | /conversations/:id | Find conversation |
+| PATCH | /conversations/:id | Update conversation |
+| DELETE | /conversations/:id | Archive conversation |
+| GET | /conversations/:id/stream | SSE stream for real-time updates |
+
+## Participants
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | /conversations/:id/participants | List participants |
+| POST | /conversations/:id/participants | Add participant |
+| PATCH | /conversations/:id/participants/:chatterId | Set participant role |
+| PATCH | /conversations/:id/participants/:chatterId/read | Mark as read |
+| DELETE | /conversations/:id/participants/:chatterId | Remove participant |
+
+## Blocks
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | /conversations/:id/blocks | List blocks (limit, before, after, threadParentId) |
+| POST | /conversations/:id/blocks | Send block |
+| PATCH | /conversations/:id/blocks/:blockId | Update block metadata |
+| DELETE | /conversations/:id/blocks/:blockId | Soft-delete block |
+
+## Policies
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | /policies/chatters/:chatterId | Resolve policy (query: conversationId, threadParentBlockId) |
+| PATCH | /policies/chatters/:chatterId | Set chatter policy |
+| PATCH | /policies/conversations/:id | Set conversation policy |
+| PATCH | /policies/conversations/:id/threads/:blockId | Set thread policy |
+| GET | /policies/roles | List roles |
+| PATCH | /policies/roles/:role | Set role policy |
+| GET | /policies/global | Get global policy |
+| PATCH | /policies/global | Set global policy |
+
+## Request / Response
+
+- **POST / PATCH**: Body as JSON. `Content-Type: application/json`.
+- **Success**: 200 with JSON body, or 204 No Content.
+- **Error**: 4xx/5xx with `{ message: string }` body.

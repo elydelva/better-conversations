@@ -1,0 +1,95 @@
+---
+title: Drizzle
+description: Drizzle adapter for PostgreSQL, SQLite, and MySQL.
+---
+
+## Installation
+
+```npm
+bun add @better-conversation/core @better-conversation/adapter-drizzle drizzle-orm
+```
+
+## Setup
+
+```ts title="lib/conversation.ts"
+import { betterConversation } from "@better-conversation/core";
+import { drizzleAdapter } from "@better-conversation/adapter-drizzle";
+import { drizzle } from "drizzle-orm/pg-core";
+import { db } from "@/lib/db";
+
+export const conv = betterConversation({
+  adapter: drizzleAdapter(db, {
+    provider: "pg",        // "pg" | "sqlite" | "mysql"
+    tablePrefix: "bc_",    // default
+    generateId: () => crypto.randomUUID(),
+  }),
+});
+```
+
+## Providers
+
+| Provider | Import |
+|----------|--------|
+| PostgreSQL | `createSchema` (default) |
+| SQLite | `createSchemaSqlite` |
+
+<CodeBlockTabs defaultValue="pg">
+  <CodeBlockTabsList>
+    <CodeBlockTabsTrigger value="pg">PostgreSQL</CodeBlockTabsTrigger>
+    <CodeBlockTabsTrigger value="sqlite">SQLite</CodeBlockTabsTrigger>
+  </CodeBlockTabsList>
+  <CodeBlockTab value="pg">
+
+```ts title="lib/conversation.ts"
+import {
+  drizzleAdapter,
+  createSchema,
+} from "@better-conversation/adapter-drizzle";
+
+drizzleAdapter(db, { provider: "pg" });
+```
+
+  </CodeBlockTab>
+  <CodeBlockTab value="sqlite">
+
+```ts title="lib/conversation.ts"
+import {
+  drizzleAdapter,
+  createSchemaSqlite,
+} from "@better-conversation/adapter-drizzle";
+
+drizzleAdapter(db, { provider: "sqlite" });
+```
+
+  </CodeBlockTab>
+</CodeBlockTabs>
+
+## Schema
+
+Import and use the generated schema in your migrations:
+
+```ts title="migrations/schema.ts"
+import { createSchema } from "@better-conversation/adapter-drizzle";
+
+export const bcSchema = createSchema("bc_");
+// Tables: chatters, conversations, participants, blocks,
+// chatter_permissions, block_registry, role_registry, policies
+```
+
+## Migrations
+
+Create a migration with your Drizzle workflow (e.g. `drizzle-kit generate`). The schema is exported from the adapter:
+
+```ts title="drizzle.config.ts"
+import { createSchema } from "@better-conversation/adapter-drizzle";
+
+export const schema = createSchema("bc_");
+```
+
+## Initialize
+
+Call `conv.init()` before handling requests to register default blocks and roles:
+
+```ts title="init.ts"
+await conv.init();
+```

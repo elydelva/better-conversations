@@ -1,0 +1,85 @@
+---
+title: Block
+description: Typed content units — text by default; plugins or additionalBlocks for more.
+---
+
+## Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | string | Unique identifier |
+| `conversationId` | string | Conversation ID |
+| `authorId` | string | Chatter ID of author |
+| `type` | string | Block type (e.g. `text`, `media`, `reaction`) |
+| `body` | string \| null | Main content (e.g. text) |
+| `metadata` | object \| null | Type-specific metadata |
+| `threadParentId` | string \| null | Parent block for threads |
+| `status` | `"published"` \| `"pending_review"` \| `"refused"` \| `"deleted"` | Block status |
+| `refusalReason` | string \| null | Reason if refused |
+| `flaggedAt` | string \| null | When flagged by hook |
+| `editedAt` | string \| null | Last edit timestamp |
+| `createdAt` | string (ISO) | Creation timestamp |
+
+## Send a Block
+
+```ts title="example.ts"
+const block = await client.blocks.send(conversationId, {
+  authorId: chatterId,
+  type: "text",
+  body: "Hello!",
+  metadata: null,
+  threadParentId: null, // root; use parent ID for replies
+});
+```
+
+## List Blocks
+
+```ts title="example.ts"
+const { items, nextCursor } = await client.blocks.list(conversationId, {
+  limit: 20,
+  before: cursor,      // cursor-based pagination
+  after: cursor,
+  threadParentId: id,  // filter by thread (undefined = root only)
+});
+```
+
+## Update Metadata
+
+```ts title="example.ts"
+await client.blocks.updateMeta(conversationId, blockId, {
+  body: "Updated text",
+  metadata: { edited: true },
+});
+```
+
+## Delete (Soft)
+
+```ts title="example.ts"
+await client.blocks.delete(conversationId, blockId);
+```
+
+## Block Registry
+
+Block types are registered in the engine. Default types:
+
+| Type | Description |
+|------|-------------|
+| `text` | Plain text content |
+
+Additional blocks from `@better-conversation/blocks` or custom:
+
+```ts title="lib/blocks/custom.ts"
+import { createBlock } from "@better-conversation/core";
+
+const mediaBlock = createBlock({
+  type: "media",
+  schema: { url: "string", mimeType: "string" },
+});
+
+// Pass to config
+additionalBlocks: { media: mediaBlock }
+```
+
+## Policy: allowedBlocks
+
+The resolved policy includes `allowedBlocks` (array or `"*"`). Only registered types in `allowedBlocks` can be sent. Use `deniedBlocks` to exclude specific types.

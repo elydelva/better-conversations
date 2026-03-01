@@ -1,0 +1,133 @@
+---
+title: Schema
+description: Consistent schema across adapters — default table prefix bc_.
+---
+
+## Tables
+
+### bc_chatters
+
+| Column | Type | Description |
+|--------|------|-------------|
+| id | varchar(36) PK | Chatter ID |
+| display_name | varchar(255) | Display name |
+| avatar_url | text | Avatar URL |
+| entity_type | varchar(64) | user, bot, org |
+| entity_id | varchar(255) | Your app's entity ID |
+| metadata | jsonb | Custom metadata |
+| is_active | boolean | Active flag |
+| created_at | timestamp | Created at |
+| updated_at | timestamp | Updated at |
+
+### bc_conversations
+
+| Column | Type | Description |
+|--------|------|-------------|
+| id | varchar(36) PK | Conversation ID |
+| title | varchar(255) | Title |
+| status | enum | open, archived, locked |
+| entity_type | varchar(64) | Optional entity type |
+| entity_id | varchar(255) | Optional entity ID |
+| created_by | varchar(36) FK | Creator chatter ID |
+| metadata | jsonb | Custom metadata |
+| created_at | timestamp | Created at |
+| updated_at | timestamp | Updated at |
+
+### bc_participants
+
+| Column | Type | Description |
+|--------|------|-------------|
+| id | varchar(36) PK | Participant ID |
+| conversation_id | varchar(36) FK | Conversation ID |
+| chatter_id | varchar(36) FK | Chatter ID |
+| role | varchar(64) | owner, member, observer, bot |
+| joined_at | timestamp | Joined at |
+| left_at | timestamp | When left |
+| last_read_at | timestamp | Last read |
+| metadata | jsonb | Custom metadata |
+
+### bc_blocks
+
+| Column | Type | Description |
+|--------|------|-------------|
+| id | varchar(36) PK | Block ID |
+| conversation_id | varchar(36) FK | Conversation ID |
+| author_id | varchar(36) FK | Author chatter ID |
+| type | varchar(128) | text, media, etc. |
+| body | text | Content body |
+| metadata | jsonb | Type-specific metadata |
+| thread_parent_id | varchar(36) FK | Parent block for threads |
+| status | enum | published, pending_review, refused, deleted |
+| refusal_reason | text | Reason if refused |
+| flagged_at | timestamp | When flagged |
+| edited_at | timestamp | Last edit |
+| created_at | timestamp | Created at |
+
+### bc_chatter_permissions
+
+| Column | Type | Description |
+|--------|------|-------------|
+| id | varchar(36) PK | Permission ID |
+| chatter_id | varchar(36) FK | Chatter ID |
+| action | varchar(128) | Action name |
+| scope | varchar(255) | Optional scope |
+| granted | boolean | Grant or revoke |
+
+### bc_block_registry
+
+| Column | Type | Description |
+|--------|------|-------------|
+| type | varchar(128) PK | Block type |
+| schema_json | jsonb | Block schema |
+| is_built_in | boolean | Built-in flag |
+| registered_at | timestamp | Registered at |
+
+### bc_role_registry
+
+| Column | Type | Description |
+|--------|------|-------------|
+| name | varchar(64) PK | Role name |
+| extends | varchar(64) | Parent role |
+| policy | jsonb | Role policy |
+| is_built_in | boolean | Built-in flag |
+| registered_at | timestamp | Registered at |
+
+### bc_policies
+
+| Column | Type | Description |
+|--------|------|-------------|
+| id | varchar(36) PK | Policy ID |
+| level | enum | global, role, chatter, conversation, thread |
+| scope_id | varchar(255) | Scope identifier |
+| policy | jsonb | Policy object |
+| created_at | timestamp | Created at |
+| updated_at | timestamp | Updated at |
+
+Unique on `(level, scope_id)`.
+
+## Table Prefix
+
+Change the prefix via adapter options. The schema is consistent across all adapters:
+
+<CodeBlockTabs defaultValue="drizzle">
+  <CodeBlockTabsList>
+    <CodeBlockTabsTrigger value="drizzle">Drizzle</CodeBlockTabsTrigger>
+    <CodeBlockTabsTrigger value="prisma">Prisma</CodeBlockTabsTrigger>
+  </CodeBlockTabsList>
+  <CodeBlockTab value="drizzle">
+
+```ts title="lib/conversation.ts"
+drizzleAdapter(db, { tablePrefix: "my_conv_" });
+```
+
+  </CodeBlockTab>
+  <CodeBlockTab value="prisma">
+
+```ts title="lib/conversation.ts"
+prismaAdapter(prisma, { tablePrefix: "my_conv_" });
+```
+
+  </CodeBlockTab>
+</CodeBlockTabs>
+
+Tables become `my_conv_chatters`, `my_conv_conversations`, etc.

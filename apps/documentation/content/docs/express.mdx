@@ -1,0 +1,61 @@
+---
+title: Express
+description: Mount the conversation API with handler-express.
+---
+
+## Installation
+
+```npm
+bun add @better-conversation/core @better-conversation/adapter-drizzle @better-conversation/handler-express
+```
+
+## Mount Handler
+
+```ts title="app.ts"
+import express from "express";
+import { conv } from "./lib/conversation";
+import { createExpressHandler } from "@better-conversation/handler-express";
+
+const app = express();
+
+// Important: mount json() before the handler for POST/PATCH body parsing
+app.use(express.json());
+
+app.use("/conversation", createExpressHandler(conv));
+
+app.listen(3000);
+```
+
+## Base Path
+
+The handler strips the mount path (`/conversation`) from the request path. Requests to `/conversation/chatters` are dispatched as `/chatters`.
+
+## Options
+
+```ts title="app.ts"
+createExpressHandler(conv, { basePath: "/conversation" });
+```
+
+If you mount at `/api/conversation`, set `basePath: "/api/conversation"` so the internal routes match correctly.
+
+## Full Example
+
+```ts title="app.ts"
+import express from "express";
+import { betterConversation } from "@better-conversation/core";
+import { drizzleAdapter } from "@better-conversation/adapter-drizzle";
+import { createExpressHandler } from "@better-conversation/handler-express";
+import { db } from "./db";
+
+const conv = betterConversation({
+  adapter: drizzleAdapter(db, { provider: "pg" }),
+});
+
+const app = express();
+app.use(express.json());
+app.use("/conversation", createExpressHandler(conv));
+
+app.listen(3000, () => {
+  console.log("Server at http://localhost:3000");
+});
+```

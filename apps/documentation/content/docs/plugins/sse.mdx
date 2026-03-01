@@ -1,0 +1,55 @@
+---
+title: SSE
+description: Real-time block updates via Server-Sent Events — streaming built into the handler.
+---
+
+## Installation
+
+```npm
+bun add @better-conversation/plugins
+```
+
+## Setup
+
+```ts title="lib/conversation.ts"
+import { betterConversation } from "@better-conversation/core";
+import { ssePlugin } from "@better-conversation/plugins/sse";
+
+const conv = betterConversation({
+  adapter,
+  plugins: [ssePlugin],
+});
+```
+
+## Endpoint
+
+The core routes include:
+
+```
+GET /conversations/:id/stream
+```
+
+This streams `block:created` events (and optionally other events) as new blocks are added to the conversation.
+
+## Client Usage
+
+```ts title="client.ts"
+import { createConversationClient } from "@better-conversation/client";
+
+const client = createConversationClient({ baseUrl: "/api/conversation" });
+
+const es = client.stream(conversationId);
+
+es.addEventListener("block:created", (e) => {
+  const block = JSON.parse(e.data);
+  console.log("New block:", block);
+});
+
+es.addEventListener("error", () => {
+  es.close();
+});
+```
+
+## Edge Compatibility
+
+The SSE implementation is polling-based and Edge-compatible. No WebSocket server required.

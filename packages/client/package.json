@@ -30,7 +30,5 @@
     "react": "^18.0.0",
     "typescript": "catalog:"
   },
-  "files": [
-    "dist"
-  ]
+  "files": ["dist"]
 }

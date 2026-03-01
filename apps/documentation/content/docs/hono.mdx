@@ -1,0 +1,74 @@
+---
+title: Hono
+description: Mount the conversation API with handler-hono.
+---
+
+## Installation
+
+```npm
+bun add @better-conversation/core @better-conversation/adapter-drizzle @better-conversation/handler-hono
+```
+
+## Mount Handler
+
+```ts title="app.ts"
+import { Hono } from "hono";
+import { conv } from "./lib/conversation";
+import { createHonoHandler } from "@better-conversation/handler-hono";
+
+const app = new Hono();
+
+app.route("/conversation", createHonoHandler(conv));
+
+export default app;
+```
+
+## Base Path
+
+The handler uses Hono's `c.req.path` and strips the mount prefix. Requests to `/conversation/conversations` are dispatched as `/conversations`.
+
+## Full Example
+
+<CodeBlockTabs defaultValue="node">
+  <CodeBlockTabsList>
+    <CodeBlockTabsTrigger value="node">Node / Vercel</CodeBlockTabsTrigger>
+    <CodeBlockTabsTrigger value="bun">Bun.serve</CodeBlockTabsTrigger>
+  </CodeBlockTabsList>
+  <CodeBlockTab value="node">
+
+```ts title="app.ts"
+import { Hono } from "hono";
+import { betterConversation } from "@better-conversation/core";
+import { drizzleAdapter } from "@better-conversation/adapter-drizzle";
+import { createHonoHandler } from "@better-conversation/handler-hono";
+import { db } from "./db";
+
+const conv = betterConversation({
+  adapter: drizzleAdapter(db, { provider: "pg" }),
+});
+
+const app = new Hono();
+app.route("/conversation", createHonoHandler(conv));
+
+export default {
+  port: 3000,
+  fetch: app.fetch,
+};
+```
+
+  </CodeBlockTab>
+  <CodeBlockTab value="bun">
+
+```ts title="app.ts"
+import { Hono } from "hono";
+import { conv } from "./lib/conversation";
+import { createHonoHandler } from "@better-conversation/handler-hono";
+
+const app = new Hono();
+app.route("/conversation", createHonoHandler(conv));
+
+Bun.serve({ fetch: app.fetch, port: 3000 });
+```
+
+  </CodeBlockTab>
+</CodeBlockTabs>

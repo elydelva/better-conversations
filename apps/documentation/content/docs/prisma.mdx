@@ -1,0 +1,37 @@
+---
+title: Prisma
+description: Prisma adapter — schema and adapter for @better-conversation/core.
+---
+
+## Installation
+
+```npm
+bun add @better-conversation/core @better-conversation/adapter-prisma @prisma/client
+```
+
+## Schema
+
+The package exports a Prisma schema. Copy or extend it in your `schema.prisma`:
+
+```bash title="terminal"
+# View the schema
+bunx prisma db pull  # or inspect the package schema
+```
+
+Or import from the package:
+
+```prisma title="schema.prisma"
+// Extend from @better-conversation/adapter-prisma schema
+```
+
+## Status
+
+The Prisma adapter is in development. For production, use the [Drizzle adapter](/docs/drizzle) which is fully supported.
+
+## Migration Path
+
+If you need Prisma, you can:
+
+1. Use the Drizzle adapter with a separate Drizzle instance pointing to the same DB
+2. Implement a custom adapter implementing the core `DatabaseAdapter` interface
+3. Wait for the official Prisma adapter release

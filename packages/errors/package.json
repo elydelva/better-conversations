@@ -17,7 +17,5 @@
   "devDependencies": {
     "typescript": "catalog:"
   },
-  "files": [
-    "dist"
-  ]
+  "files": ["dist"]
 }

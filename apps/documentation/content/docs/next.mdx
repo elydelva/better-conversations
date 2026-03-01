@@ -1,0 +1,65 @@
+---
+title: Next.js
+description: Mount the conversation API in App Router with handler-next.
+---
+
+## Installation
+
+```npm
+bun add @better-conversation/core @better-conversation/adapter-drizzle @better-conversation/handler-next
+```
+
+## Route Handler
+
+Create a catch-all route for the conversation API:
+
+```ts title="app/api/conversation/[[...path]]/route.ts"
+import { conv } from "@/lib/conversation";
+import { createNextHandler } from "@better-conversation/handler-next";
+
+const handler = createNextHandler(conv, { basePath: "/api/conversation" });
+
+export const GET = handler.GET;
+export const POST = handler.POST;
+export const PATCH = handler.PATCH;
+export const DELETE = handler.DELETE;
+```
+
+## Base Path
+
+The `basePath` option strips the mount prefix from the request path before dispatching. All routes are relative to this path:
+
+| Request | Matches |
+|---------|---------|
+| `GET /api/conversation/conversations` | `GET /conversations` |
+| `POST /api/conversation/conversations/123/blocks` | `POST /conversations/123/blocks` |
+
+## Engine Setup
+
+```ts title="lib/conversation.ts"
+import { betterConversation } from "@better-conversation/core";
+import { drizzleAdapter } from "@better-conversation/adapter-drizzle";
+import { db } from "@/lib/db";
+
+export const conv = betterConversation({
+  adapter: drizzleAdapter(db, { provider: "pg" }),
+});
+```
+
+## Client
+
+```ts title="lib/conversation-client.ts"
+import { createConversationClient } from "@better-conversation/client";
+
+export const conversationClient = createConversationClient({
+  baseUrl: process.env.NEXT_PUBLIC_APP_URL
+    ? `${process.env.NEXT_PUBLIC_APP_URL}/api/conversation`
+    : "/api/conversation",
+});
+```
+
+For server-side usage, pass the full URL. For client-side, use a relative path if same-origin.
+
+## Pages Router
+
+The handler returns standard `Response` objects. For Pages Router, you would need a custom API route that forwards to the core dispatcher. The recommended approach is App Router with the catch-all above.

@@ -1,11 +1,7 @@
 ---
 title: Architecture
-description: Core structure, layers, and interfaces of better-conversation.
+description: Interface-first — core has no framework/ORM knowledge; adapters and handlers inject implementations.
 ---
-
-# Architecture Overview
-
-The core principle: **better-conversation core does not know what Express, Next.js, Drizzle, or PostgreSQL are.** It never imports them. It works exclusively with **TypeScript interfaces** that you inject via config — Clean Architecture applied to an npm package.
 
 ## Package Layers
 
@@ -35,7 +31,7 @@ The core defines this interface. The adapter implements it. The core only knows 
 
 The engine operates solely via `config.adapter`. It does not know if you're using Drizzle, Prisma, or an in-memory mock.
 
-```ts
+```ts title="ConversationEngine"
 export class ConversationEngine<
   TBlocks extends BlockRegistry = DefaultBlockRegistry,
   TRoles extends RoleRegistry = DefaultRoleRegistry,
@@ -46,7 +42,7 @@ export class ConversationEngine<
 
 ## Config — Single Entry Point
 
-```ts
+```ts title="ConversationConfig"
 export interface ConversationConfig<TBlocks, TRoles> {
   adapter: DatabaseAdapter;
   additionalBlocks?: TBlocks;

@@ -1,0 +1,106 @@
+---
+title: Policy
+description: Multi-level authorization — what a chatter can do; merge from global → role → chatter → conv → thread.
+---
+
+## Policy Levels
+
+| Level | Scope | ID |
+|-------|-------|-----|
+| Global | App-wide default | `GLOBAL_SCOPE_ID` |
+| Role | Participant's role | role name (e.g. `member`, `owner`) |
+| Chatter | Per-chatter override | chatter ID |
+| Conversation | Per-conversation override | conversation ID |
+| Thread | Per-thread override | parent block ID |
+
+**Merge order:** Global → Role → Chatter → Conversation → Thread. Later levels override earlier (or restrict, depending on strategy).
+
+## Merge Strategies
+
+<CodeBlockTabs defaultValue="override">
+  <CodeBlockTabsList>
+    <CodeBlockTabsTrigger value="override">Override (default)</CodeBlockTabsTrigger>
+    <CodeBlockTabsTrigger value="restrict">Restrict</CodeBlockTabsTrigger>
+  </CodeBlockTabsList>
+  <CodeBlockTab value="override">
+
+Later levels override earlier for each field. Use when you want more specific scope to win.
+
+```ts title="override-example.ts"
+// global: allowedBlocks: ["text"] → role owner: allowedBlocks: ["text","media"]
+// Resolved for owner: ["text", "media"] (role wins)
+```
+
+  </CodeBlockTab>
+  <CodeBlockTab value="restrict">
+
+For restrictive fields (e.g. `allowedBlocks`, `maxBlocksPerMinute`), the most restrictive value wins.
+
+```ts title="restrict-example.ts"
+// global: allowedBlocks: ["text"] → role: allowedBlocks: ["text","media"]
+// Resolved: ["text"] (most restrictive wins)
+```
+
+  </CodeBlockTab>
+</CodeBlockTabs>
+
+## Policy Object
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `readOnly` | boolean | Cannot send blocks |
+| `threadClosed` | boolean | Thread closed |
+| `allowedBlocks` | `string[]` \| `"*"` | Allowed block types |
+| `deniedBlocks` | `string[]` | Blocked types |
+| `maxBlockBodyLength` | number | Max body length |
+| `canEditOwnBlocks` | boolean | Can edit own blocks |
+| `canDeleteOwnBlocks` | boolean | Can delete own blocks |
+| `editWindowSeconds` | number | Edit window after send |
+| `maxBlocksPerMinute` | number | Rate limit |
+| `maxBlocksPerHour` | number | Rate limit |
+| `maxBlocksPerDay` | number | Rate limit |
+| `maxBlocksPerConversation` | number | Per-conversation cap |
+| `sendCooldownMs` | number | Delay between sends |
+| `threadsEnabled` | boolean | Threads allowed |
+| `maxThreadDepth` | number | Max reply depth |
+| `maxThreadReplies` | number | Max replies per parent |
+| `maxParticipants` | number | Max participants per conversation |
+
+## Config
+
+```ts title="lib/conversation.ts"
+const conv = betterConversation({
+  adapter,
+  policies: {
+    global: {
+      allowedBlocks: ["text"],
+      maxBlocksPerMinute: 20,
+      editWindowSeconds: 300,
+    },
+    roles: {
+      owner: { allowedBlocks: "*", maxBlocksPerMinute: 60 },
+    },
+    mergeStrategy: "restrict",
+    onResolve: async (resolved, ctx) => {
+      // Optional post-merge transform
+      return resolved;
+    },
+  },
+});
+```
+
+## Resolve Policy (API)
+
+```
+GET /policies/chatters/:chatterId?conversationId=...&threadParentBlockId=...
+```
+
+Returns the resolved policy for that chatter in the given context.
+
+## Set Overrides (API)
+
+- `PATCH /policies/global` — Set global policy
+- `PATCH /policies/roles/:role` — Set role policy
+- `PATCH /policies/chatters/:chatterId` — Set chatter policy
+- `PATCH /policies/conversations/:id` — Set conversation policy
+- `PATCH /policies/conversations/:id/threads/:blockId` — Set thread policy

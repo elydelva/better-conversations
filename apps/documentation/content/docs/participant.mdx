@@ -1,0 +1,73 @@
+---
+title: Participant
+description: Chatter-to-conversation association with a role for policy-based permissions.
+---
+
+## Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | string | Unique identifier |
+| `conversationId` | string | Conversation ID |
+| `chatterId` | string | Chatter ID |
+| `role` | string | Role name (e.g. `owner`, `member`, `observer`) |
+| `joinedAt` | string (ISO) | Join timestamp |
+| `leftAt` | string \| null | When the participant left |
+| `lastReadAt` | string \| null | Last read timestamp |
+| `metadata` | object \| null | Custom metadata |
+
+## Roles (Built-in)
+
+| Role | Description | Default Policy |
+|------|-------------|----------------|
+| `owner` | Full control | All blocks, high rate limits |
+| `member` | Standard participant | Text, moderate limits |
+| `observer` | Read-only | No send |
+| `bot` | Automated | All blocks, no edit |
+
+Custom roles via [Roles plugin](/docs/roles) or `additionalRoles` in config.
+
+## Add Participant
+
+```ts title="example.ts"
+await client.participants.add(conversationId, {
+  chatterId: chatterId,
+  role: "member",
+});
+```
+
+## Remove Participant
+
+```ts title="example.ts"
+await client.participants.remove(conversationId, chatterId);
+```
+
+## Set Role
+
+```ts title="example.ts"
+await client.participants.setRole(conversationId, chatterId, "owner");
+```
+
+## List Participants
+
+```ts title="example.ts"
+const participants = await client.participants.list(conversationId);
+```
+
+## Mark Read
+
+```ts title="example.ts"
+await client.participants.markRead(conversationId, chatterId);
+```
+
+## Role Resolution
+
+The participant's `role` is used by the policy engine when resolving permissions:
+
+1. Global policy (defaults)
+2. Role policy (from `roleRegistry` or DB)
+3. Chatter override
+4. Conversation override
+5. Thread override
+
+See [Policy](/docs/policy) for details.

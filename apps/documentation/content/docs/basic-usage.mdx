@@ -1,0 +1,112 @@
+---
+title: Basic Usage
+description: Create chatters, conversations, participants, and blocks — step-by-step guide.
+icon: Play
+---
+
+## Setup
+
+Assume you have the engine mounted at `/api/conversation` and a client:
+
+```ts title="lib/conversation-client.ts"
+import { createConversationClient } from "@better-conversation/client";
+
+const client = createConversationClient({
+  baseUrl: "http://localhost:3000/api/conversation",
+});
+```
+
+## 1. Create a Chatter
+
+Chatters represent identities — users, bots, or organizations.
+
+```ts title="example.ts"
+const chatter = await client.chatters.create({
+  displayName: "Alice",
+  entityType: "user",
+  entityId: "user-123",
+  avatarUrl: "https://…",
+});
+
+console.log(chatter.id); // use for authorId, participant references
+```
+
+## 2. Create a Conversation
+
+```ts title="example.ts"
+const conversation = await client.conversations.create({
+  createdBy: chatter.id,
+  participants: [
+    { chatterId: chatter.id, role: "owner" },
+    { chatterId: otherChatterId, role: "member" },
+  ],
+  title: "Support Thread",
+  entityType: "ticket",
+  entityId: "ticket-456",
+});
+```
+
+## 3. Add Participants
+
+```ts title="example.ts"
+await client.participants.add(conversation.id, {
+  chatterId: newChatterId,
+  role: "member",
+});
+```
+
+## 4. Send a Block
+
+Blocks are typed content. The default block type is `text`:
+
+```ts title="example.ts"
+const block = await client.blocks.send(conversation.id, {
+  authorId: chatter.id,
+  type: "text",
+  body: "Hello, world!",
+  metadata: null,
+  threadParentId: null, // null = root; set to parent block ID for threads
+});
+```
+
+## 5. List Blocks
+
+```ts title="example.ts"
+const { items } = await client.blocks.list(conversation.id, {
+  limit: 20,
+  before: cursor,
+  threadParentId: undefined, // undefined = root level only
+});
+```
+
+## 6. Stream Updates (SSE)
+
+```ts title="example.ts"
+const es = client.stream(conversation.id);
+es.addEventListener("block:created", (e) => {
+  const data = JSON.parse(e.data);
+  console.log("New block:", data);
+});
+```
+
+## 7. Resolve Policy (Client or Server)
+
+Check what a chatter can do in a given context:
+
+```ts title="example.ts"
+const policy = await client.policies.resolve(chatter.id, conversation.id);
+
+if (policy.readOnly) {
+  // Chatter cannot send blocks
+}
+if (Array.isArray(policy.allowedBlocks) && policy.allowedBlocks.includes("text")) {
+  // Can send text blocks
+}
+```
+
+## Next Steps
+
+- [Concepts: Chatter](/docs/chatter) — Identity and entity mapping
+- [Concepts: Block](/docs/block) — Typed content and extensions
+- [Concepts: Policy](/docs/policy) — Authorization and merge levels
+- [Client Reference](/docs/client) — Full client API

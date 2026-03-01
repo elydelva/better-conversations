@@ -1,0 +1,70 @@
+---
+title: Roles
+description: Pre-built roles — moderator, admin, guest, support.
+---
+
+## Installation
+
+```npm
+bun add @better-conversation/roles
+```
+
+## Roles
+
+| Role | Description |
+|------|-------------|
+| `moderator` | Elevated permissions, can moderate content |
+| `admin` | Full admin capabilities |
+| `guest` | Limited, often read-only or restricted |
+| `support` | Support agent role |
+
+## Setup
+
+```ts title="lib/conversation.ts"
+import { betterConversation } from "@better-conversation/core";
+import { createRole } from "@better-conversation/core";
+// Custom roles from @better-conversation/roles or define your own
+
+const moderatorRole = createRole({
+  name: "moderator",
+  extends: "member",
+  policy: {
+    allowedBlocks: "*",
+    maxBlocksPerMinute: 60,
+    canEditOwnBlocks: true,
+    canDeleteOwnBlocks: true,
+  },
+});
+
+const conv = betterConversation({
+  adapter,
+  additionalRoles: {
+    moderator: moderatorRole,
+  },
+});
+```
+
+## Assigning Roles
+
+When adding participants:
+
+```ts title="example.ts"
+await client.participants.add(conversationId, {
+  chatterId,
+  role: "moderator",
+});
+```
+
+## Extending Roles
+
+Roles can extend other roles. The extended role's policy is merged first:
+
+```ts title="lib/roles.ts"
+createRole({
+  name: "super-moderator",
+  extends: "moderator",
+  policy: {
+    maxBlocksPerMinute: 120, // Override
+  },
+});
+```

@@ -1,0 +1,111 @@
+---
+title: Client
+description: Type-safe client for the conversation API.
+---
+
+## Installation
+
+```npm
+bun add @better-conversation/client
+```
+
+## Create Client
+
+<CodeBlockTabs defaultValue="server">
+  <CodeBlockTabsList>
+    <CodeBlockTabsTrigger value="server">Server / Node</CodeBlockTabsTrigger>
+    <CodeBlockTabsTrigger value="browser">Browser (Next.js)</CodeBlockTabsTrigger>
+  </CodeBlockTabsList>
+  <CodeBlockTab value="server">
+
+```ts title="lib/conversation-client.ts"
+import { createConversationClient } from "@better-conversation/client";
+
+const client = createConversationClient({
+  baseUrl: "http://localhost:3000/api/conversation",
+  chatterId: "optional-default",
+  fetchFn: fetch,
+});
+```
+
+  </CodeBlockTab>
+  <CodeBlockTab value="browser">
+
+```ts title="lib/conversation-client.ts"
+import { createConversationClient } from "@better-conversation/client";
+
+const client = createConversationClient({
+  baseUrl: "/api/conversation", // relative for same-origin
+  chatterId: "optional-default",
+});
+```
+
+  </CodeBlockTab>
+</CodeBlockTabs>
+
+## Chatters
+
+```ts title="example.ts"
+client.chatters.find(id);
+client.chatters.create({ displayName, entityType, entityId?, avatarUrl? });
+client.chatters.update(id, { displayName?, avatarUrl?, entityType?, entityId? });
+```
+
+## Conversations
+
+```ts title="example.ts"
+client.conversations.find(id);
+client.conversations.list({ entityType?, entityId?, limit?, cursor? });
+client.conversations.create({
+  createdBy,
+  participants: [{ chatterId, role }],
+  title?,
+  entityType?,
+  entityId?,
+});
+client.conversations.update(id, { title?, status?, metadata? });
+```
+
+## Participants
+
+```ts title="example.ts"
+client.participants.list(conversationId);
+client.participants.add(conversationId, { chatterId, role });
+client.participants.remove(conversationId, chatterId);
+client.participants.setRole(conversationId, chatterId, role);
+client.participants.markRead(conversationId, chatterId);
+```
+
+## Blocks
+
+```ts title="example.ts"
+client.blocks.list(conversationId, { limit?, before?, after?, threadParentId? });
+client.blocks.send(conversationId, {
+  authorId,
+  type,
+  body?,
+  metadata?,
+  threadParentId?,
+});
+client.blocks.updateMeta(conversationId, blockId, { body?, metadata? });
+client.blocks.delete(conversationId, blockId);
+```
+
+## Policies
+
+```ts title="example.ts"
+client.policies.resolve(chatterId, conversationId?, threadParentBlockId?);
+```
+
+## Stream (SSE)
+
+```ts title="example.ts"
+const es = client.stream(conversationId);
+es.addEventListener("block:created", (e) => {
+  const data = JSON.parse(e.data);
+});
+```
+
+## Error Handling
+
+The client throws on non-2xx responses. The error message comes from the API's `message` field.

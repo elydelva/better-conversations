@@ -1,0 +1,75 @@
+---
+title: Audit
+description: Immutable audit log for blocks and conversations — compliance, debugging, analytics.
+---
+
+## Installation
+
+```npm
+bun add @better-conversation/plugins
+```
+
+## Setup
+
+```ts title="lib/conversation.ts"
+import { betterConversation } from "@better-conversation/core";
+import { createAuditPlugin } from "@better-conversation/plugins/audit";
+
+const audit = createAuditPlugin();
+
+const conv = betterConversation({
+  adapter,
+  hooks: audit.hooks,
+});
+```
+
+## Events
+
+| Event | When |
+|-------|------|
+| `block:created` | After a block is sent |
+| `conversation:created` | After a conversation is created |
+
+## Custom Store
+
+By default, the plugin uses an in-memory store. Provide a custom store for persistence:
+
+```ts title="lib/audit.ts"
+const audit = createAuditPlugin({
+  store: {
+    async append(entry) {
+      await db.auditLog.create({
+        data: {
+          event: entry.event,
+          entityType: entry.entityType,
+          entityId: entry.entityId,
+          payload: entry.payload,
+        },
+      });
+    },
+    async query(filters) {
+      return db.auditLog.findMany({
+        where: {
+          ...(filters.event && { event: filters.event }),
+          ...(filters.entityType && { entityType: filters.entityType }),
+          ...(filters.entityId && { entityId: filters.entityId }),
+          ...(filters.since && { createdAt: { gte: filters.since } }),
+        },
+        take: filters.limit ?? 100,
+      });
+    },
+  },
+});
+```
+
+## Querying
+
+```ts title="query.ts"
+const entries = await audit.store.query?.({
+  event: "block:created",
+  entityType: "conversation",
+  entityId: conversationId,
+  since: new Date(Date.now() - 24 * 60 * 60 * 1000),
+  limit: 100,
+});
+```

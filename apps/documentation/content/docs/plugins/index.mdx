@@ -1,0 +1,73 @@
+---
+title: Plugins
+description: Extend the engine with blocks, roles, hooks, and custom behavior via ConversationPlugin.
+---
+
+```ts title="ConversationPlugin"
+interface ConversationPlugin {
+  name: string;
+  init?(engine: unknown): Promise<void> | void;
+}
+```
+
+## Adding a Plugin
+
+```ts title="lib/conversation.ts"
+import { betterConversation } from "@better-conversation/core";
+import { ssePlugin } from "@better-conversation/plugins/sse";
+
+const conv = betterConversation({
+  adapter,
+  plugins: [ssePlugin],
+});
+```
+
+## Built-in Plugins
+
+| Plugin | Description |
+|--------|-------------|
+| [SSE](/docs/plugins/sse) | Real-time block updates via Server-Sent Events |
+| [Audit](/docs/audit) | Immutable audit log for blocks and conversations |
+| [Blocks](/docs/blocks) | Media, reaction, embed, poll block types |
+| [Roles](/docs/roles) | Moderator, admin, guest, support roles |
+
+## Custom Plugins
+
+Create a plugin that implements `init` and optionally returns hooks to merge into config:
+
+```ts title="lib/plugins/my-plugin.ts"
+import type { ConversationPlugin, ConversationHooks } from "@better-conversation/core";
+
+export const myPlugin: ConversationPlugin = {
+  name: "my-plugin",
+  async init(engine) {
+    // Register custom logic, extend engine
+  },
+};
+
+// Or a hook-based plugin
+export function createMyPlugin(): ConversationPlugin & { hooks: ConversationHooks } {
+  return {
+    name: "my-plugin",
+    hooks: {
+      onBlockBeforeSend: async (ctx, outcomes) => {
+        // Custom logic
+        return outcomes.next();
+      },
+    },
+  };
+}
+```
+
+For hook-based plugins, merge the returned hooks into your config:
+
+```ts title="lib/conversation.ts"
+const myPlugin = createMyPlugin();
+betterConversation({
+  adapter,
+  hooks: {
+    ...myPlugin.hooks,
+    onBlockBeforeSend: composeHooks(myPlugin.hooks.onBlockBeforeSend, myHook),
+  },
+});
+```

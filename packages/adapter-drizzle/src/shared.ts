@@ -2,7 +2,6 @@
  * Shared context and utilities for Drizzle adapter parts.
  * All parts implement the core adapter interfaces (ChatterAdapter, etc.).
  */
-/* biome-ignore lint/suspicious/noExplicitAny: Drizzle fluent API requires untyped chain */
 import type { createAdapterHelpers } from "@better-conversation/core";
 import type { createSchema } from "./schema";
 import type { createSchemaSqlite } from "./schema.sqlite";

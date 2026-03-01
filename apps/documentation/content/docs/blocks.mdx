@@ -1,0 +1,74 @@
+---
+title: Blocks
+description: Blocks plugin providing media, reaction, embed, and poll block types.
+---
+
+## Installation
+
+```npm
+bun add @better-conversation/blocks
+```
+
+## Block Types
+
+| Type | Description |
+|------|-------------|
+| `media` | Images, videos, files |
+| `reaction` | Emoji reactions |
+| `embed` | Embedded URLs (oEmbed-style) |
+| `poll` | Polls with options |
+
+## Setup
+
+```ts title="lib/conversation.ts"
+import { betterConversation } from "@better-conversation/core";
+import { mediaBlock, reactionBlock, embedBlock, pollBlock } from "@better-conversation/blocks";
+
+const conv = betterConversation({
+  adapter,
+  additionalBlocks: {
+    media: mediaBlock,
+    reaction: reactionBlock,
+    embed: embedBlock,
+    poll: pollBlock,
+  },
+});
+```
+
+## Creating Custom Blocks
+
+Use `createBlock` from the core:
+
+```ts title="lib/blocks/custom.ts"
+import { createBlock } from "@better-conversation/core";
+
+const mediaBlock = createBlock({
+  type: "media",
+  schema: {
+    url: "string",
+    mimeType: "string",
+    width: "number?",
+    height: "number?",
+  },
+  hooks: {
+    beforeSend: async (ctx, outcomes) => {
+      if (!ctx.body?.url) return outcomes.refuse("URL required");
+      return outcomes.next();
+    },
+  },
+});
+```
+
+## Policy
+
+Add block types to `allowedBlocks` in your policy:
+
+```ts title="lib/conversation.ts"
+policies: {
+  global: {
+    allowedBlocks: ["text", "media", "reaction"],
+  },
+}
+```
+
+Or use `"*"` to allow all registered blocks.

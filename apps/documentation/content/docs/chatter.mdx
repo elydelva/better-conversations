@@ -1,0 +1,67 @@
+---
+title: Chatter
+description: Identity abstraction for users, bots, and organizations participating in conversations.
+---
+
+## Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | string | Unique identifier |
+| `displayName` | string | Display name |
+| `avatarUrl` | string \| null | Avatar URL |
+| `entityType` | string | e.g. `"user"`, `"bot"`, `"org"` |
+| `entityId` | string \| null | Your app's entity ID (e.g. user ID from Better Auth) |
+| `metadata` | object \| null | Custom metadata |
+| `isActive` | boolean | Whether the chatter is active |
+| `createdAt` | string (ISO) | Creation timestamp |
+| `updatedAt` | string (ISO) | Last update timestamp |
+
+## Entity Mapping
+
+Use `entityType` and `entityId` to link chatters to your own system:
+
+```ts title="example.ts"
+// Link to a Better Auth user
+await client.chatters.create({
+  displayName: user.name,
+  entityType: "user",
+  entityId: user.id,
+  avatarUrl: user.image,
+});
+```
+
+## Create
+
+```ts title="example.ts"
+const chatter = await client.chatters.create({
+  displayName: "Support Bot",
+  entityType: "bot",
+  entityId: "bot-support-1",
+  avatarUrl: null,
+});
+```
+
+## Find
+
+```ts title="example.ts"
+const chatter = await client.chatters.find(chatterId);
+```
+
+## Update
+
+```ts title="example.ts"
+const updated = await client.chatters.update(chatterId, {
+  displayName: "Alice (Admin)",
+  avatarUrl: "https://…",
+});
+```
+
+## List Conversations
+
+Use `GET /chatters/:id/conversations` to list conversations for a chatter. The client may expose this as `client.chatters.conversations(id)` depending on the version.
+
+## Best Practices
+
+1. **One chatter per entity** — Create one chatter per user/bot; reuse via `entityType` + `entityId`.
+2. **Sync with auth** — When a user signs up, create a chatter with `entityType: "user"` and `entityId: user.id`.

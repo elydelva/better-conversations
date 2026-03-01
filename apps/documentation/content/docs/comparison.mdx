@@ -1,0 +1,41 @@
+---
+title: Comparison
+description: How better-conversation compares to building from scratch, third-party SDKs, and custom WebSockets.
+icon: Scale
+---
+
+## vs. Building from Scratch
+
+| Aspect | From Scratch | better-conversation |
+|--------|--------------|---------------------|
+| **Policy engine** | Implement merge logic, levels, defaults | Built-in multi-level (global → role → chatter → conv → thread) |
+| **Hooks / Moderation** | Custom middleware, order, error handling | Declarative pipeline with `next`, `refuse`, `transform`, `flag`, `defer`, `queue` |
+| **Blocks** | Ad-hoc JSON, validation, extensions | Typed registry, schema, opt-in plugins |
+| **Storage** | Lock-in to one ORM | Adapter pattern — Drizzle, Prisma, MongoDB |
+| **Framework** | Coupled to one stack | Handler per framework (Next, Express, Hono, Fastify) |
+
+## vs. Third-Party Chat SDKs (Stream, SendBird, etc.)
+
+| Aspect | Third-Party SDKs | better-conversation |
+|--------|------------------|---------------------|
+| **Ownership** | Your data lives in their infra | Your DB, your rules |
+| **Customization** | Limited by their API | Full control — policies, hooks, blocks |
+| **Cost** | Per-seat / usage pricing | Free, self-hosted |
+| **Vendor lock-in** | High | None — pure interfaces, swap adapters |
+
+## vs. Socket.io / Custom WebSockets
+
+| Aspect | Custom WS | better-conversation |
+|--------|-----------|---------------------|
+| **Realtime** | You build it | SSE out of the box; WS via plugin |
+| **Authorization** | You implement | Policy engine + permissions |
+| **Message model** | Freeform | Structured blocks, threads, participants |
+
+## Philosophy Alignment
+
+**better-conversation** follows the same design principles as **Better Auth**:
+
+- **Interface-first** — Core defines contracts; adapters implement them.
+- **Zero vendor** — No external service required.
+- **Framework-agnostic** — Works with any HTTP-based backend.
+- **Type-safe** — End-to-end TypeScript with inferred block/role types.

@@ -23,7 +23,5 @@
     "bun-types": "^1.2.0",
     "typescript": "catalog:"
   },
-  "files": [
-    "dist"
-  ]
+  "files": ["dist"]
 }

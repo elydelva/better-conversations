@@ -1,0 +1,68 @@
+---
+title: Role
+description: Named permissions for participants — each role carries a policy.
+---
+
+## Built-in Roles
+
+| Role | Description |
+|------|-------------|
+| `member` | Default participant. Text blocks, moderate rate limits, edit/delete own blocks. |
+| `owner` | Full control. All block types, higher limits. |
+| `observer` | Read-only. Cannot send blocks. |
+| `bot` | Automated. All blocks, no edit. |
+
+## Role Definition
+
+```ts title="lib/roles.ts"
+import { createRole } from "@better-conversation/core";
+
+const moderatorRole = createRole({
+  name: "moderator",
+  extends: "member",  // optional: inherit from another role
+  policy: {
+    allowedBlocks: "*",
+    maxBlocksPerMinute: 60,
+    canEditOwnBlocks: true,
+    canDeleteOwnBlocks: true,
+  },
+});
+```
+
+## Adding Custom Roles
+
+```ts title="lib/conversation.ts"
+import { betterConversation, createRole } from "@better-conversation/core";
+
+const moderatorRole = createRole({
+  name: "moderator",
+  extends: "member",
+  policy: {
+    allowedBlocks: "*",
+    maxBlocksPerMinute: 60,
+  },
+});
+
+const conv = betterConversation({
+  adapter: drizzleAdapter(db),
+  additionalRoles: {
+    moderator: moderatorRole,
+  },
+});
+```
+
+## Role Registry
+
+Roles are stored in `bc_role_registry` (or your adapter's equivalent). On `conv.init()`, default roles and `additionalRoles` are upserted.
+
+## Policy Merge
+
+When resolving policy for a participant:
+
+1. Global policy
+2. **Role policy** (from participant.role)
+3. Chatter override
+4. Conversation override
+5. Thread override
+
+The role policy is merged according to `mergeStrategy` (`override` or `restrict`). See [Policy](/docs/policy).

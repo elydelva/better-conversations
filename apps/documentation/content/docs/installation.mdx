@@ -1,38 +1,53 @@
 ---
 title: Installation
-description: Install and configure better-conversation in your project.
+description: Install the core package, adapter, and handler for your stack.
+icon: Download
 ---
 
-# Installation
+## Prerequisites
 
-Install the core package and choose your adapter and handler.
+- **Bun** (recommended), Node.js 18+, or compatible runtime
+- A database (PostgreSQL, SQLite, or MySQL)
+- An ORM or driver supported by adapters (Drizzle, Prisma)
 
-## Using Bun
+## Install Packages
 
-```bash
-bun add @better-conversation/core @better-conversation/adapter-drizzle
+Install the core package, adapter, and handler for your stack:
+
+<CodeBlockTabs defaultValue="next">
+  <CodeBlockTabsList>
+    <CodeBlockTabsTrigger value="next">Next.js</CodeBlockTabsTrigger>
+    <CodeBlockTabsTrigger value="hono">Hono</CodeBlockTabsTrigger>
+    <CodeBlockTabsTrigger value="express">Express</CodeBlockTabsTrigger>
+  </CodeBlockTabsList>
+  <CodeBlockTab value="next">
+
+```npm
+bun add @better-conversation/core @better-conversation/adapter-drizzle @better-conversation/handler-next
 ```
 
-For Next.js:
+  </CodeBlockTab>
+  <CodeBlockTab value="hono">
 
-```bash
-bun add @better-conversation/handler-next
+```npm
+bun add @better-conversation/core @better-conversation/adapter-drizzle @better-conversation/handler-hono
 ```
 
-For Hono or Express:
+  </CodeBlockTab>
+  <CodeBlockTab value="express">
 
-```bash
-bun add @better-conversation/handler-hono
-# or
-bun add @better-conversation/handler-express
+```npm
+bun add @better-conversation/core @better-conversation/adapter-drizzle @better-conversation/handler-express
 ```
 
-## Basic Setup
+  </CodeBlockTab>
+</CodeBlockTabs>
 
-Create your conversation engine:
+## Create the Engine
 
-```ts
-// lib/conversation.ts
+Create your conversation engine instance:
+
+```ts title="lib/conversation.ts"
 import { betterConversation } from "@better-conversation/core";
 import { drizzleAdapter } from "@better-conversation/adapter-drizzle";
 import { db } from "@/lib/db";
@@ -42,12 +57,49 @@ export const conv = betterConversation({
 });
 ```
 
-## Mount in Your Framework
+## Configure Database
 
-### Next.js App Router
+Run migrations to create the required tables. Choose your adapter:
+
+<CodeBlockTabs defaultValue="drizzle">
+  <CodeBlockTabsList>
+    <CodeBlockTabsTrigger value="drizzle">Drizzle</CodeBlockTabsTrigger>
+    <CodeBlockTabsTrigger value="prisma">Prisma</CodeBlockTabsTrigger>
+  </CodeBlockTabsList>
+  <CodeBlockTab value="drizzle">
+
+```ts title="migrations/schema.ts"
+import { createSchema } from "@better-conversation/adapter-drizzle";
+
+export const bcSchema = createSchema("bc_"); // table prefix, default: bc_
+```
+
+  </CodeBlockTab>
+  <CodeBlockTab value="prisma">
 
 ```ts
-// app/api/conversation/[[...path]]/route.ts
+// Copy or extend schema from @better-conversation/adapter-prisma
+// See /docs/prisma for full setup. Prisma adapter is in development.
+```
+
+  </CodeBlockTab>
+</CodeBlockTabs>
+
+Tables created: `bc_chatters`, `bc_conversations`, `bc_participants`, `bc_blocks`, `bc_chatter_permissions`, `bc_block_registry`, `bc_role_registry`, `bc_policies`, and related.
+
+See [Database schema](/docs/schema) for full details.
+
+## Mount the Handler
+
+<CodeBlockTabs defaultValue="next">
+  <CodeBlockTabsList>
+    <CodeBlockTabsTrigger value="next">Next.js</CodeBlockTabsTrigger>
+    <CodeBlockTabsTrigger value="hono">Hono</CodeBlockTabsTrigger>
+    <CodeBlockTabsTrigger value="express">Express</CodeBlockTabsTrigger>
+  </CodeBlockTabsList>
+  <CodeBlockTab value="next">
+
+```ts title="app/api/conversation/[[...path]]/route.ts"
 import { conv } from "@/lib/conversation";
 import { createNextHandler } from "@better-conversation/handler-next";
 
@@ -59,24 +111,39 @@ export const PATCH = handler.PATCH;
 export const DELETE = handler.DELETE;
 ```
 
-### Hono
+  </CodeBlockTab>
+  <CodeBlockTab value="hono">
 
-```ts
+```ts title="app.ts"
 import { conv } from "@/lib/conversation";
 import { createHonoHandler } from "@better-conversation/handler-hono";
 
 app.route("/conversation", createHonoHandler(conv));
 ```
 
-### Express
+  </CodeBlockTab>
+  <CodeBlockTab value="express">
 
-```ts
+```ts title="app.ts"
 import { conv } from "@/lib/conversation";
 import { createExpressHandler } from "@better-conversation/handler-express";
 
+app.use(express.json());
 app.use("/conversation", createExpressHandler(conv));
 ```
 
-## Database Migrations
+  </CodeBlockTab>
+</CodeBlockTabs>
 
-Run your adapter's migrations (Drizzle, Prisma, etc.) to create the required tables: `bc_chatters`, `bc_conversations`, `bc_participants`, `bc_blocks`, and related registry tables.
+## Initialize the Engine
+
+Before handling requests, call `init()` to register default blocks and roles:
+
+```ts title="init.ts"
+await conv.init();
+```
+
+## Next Steps
+
+- [Basic Usage](/docs/basic-usage) — Create chatters, conversations, and blocks
+- [Concepts](/docs/chatter) — Understand chatters, blocks, policies, and hooks

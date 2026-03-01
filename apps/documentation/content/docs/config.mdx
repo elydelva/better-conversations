@@ -1,0 +1,58 @@
+---
+title: Config
+description: ConversationConfig interface — adapter, hooks, policies, plugins.
+---
+
+## Options
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `adapter` | DatabaseAdapter | **Required.** Database adapter. |
+| `additionalBlocks` | BlockRegistry | Extra block types. |
+| `additionalRoles` | RoleRegistry | Extra roles. |
+| `hooks` | ConversationHooks | Block, conversation, participant hooks. |
+| `policies` | PolicyConfig | Global, roles, merge strategy. |
+| `plugins` | ConversationPlugin[] | Plugins. |
+| `tablePrefix` | string | Table prefix (default: `"bc_"`). |
+| `generateId` | () => string | ID generator (default: `crypto.randomUUID`). |
+
+## Example
+
+```ts title="lib/conversation.ts"
+import { betterConversation } from "@better-conversation/core";
+import { drizzleAdapter } from "@better-conversation/adapter-drizzle";
+import { createBlock, createRole } from "@better-conversation/core";
+
+const conv = betterConversation({
+  adapter: drizzleAdapter(db, { provider: "pg" }),
+  additionalBlocks: {
+    media: createBlock({ type: "media", schema: {} }),
+  },
+  additionalRoles: {
+    moderator: createRole({
+      name: "moderator",
+      extends: "member",
+      policy: { allowedBlocks: "*" },
+    }),
+  },
+  hooks: {
+    onBlockBeforeSend: async (ctx, outcomes) => outcomes.next(),
+  },
+  policies: {
+    global: { allowedBlocks: ["text"], maxBlocksPerMinute: 20 },
+    mergeStrategy: "restrict",
+  },
+  plugins: [],
+  tablePrefix: "bc_",
+  generateId: () => crypto.randomUUID(),
+});
+```
+
+## PolicyConfig
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `global` | PolicyObject | Global default policy |
+| `roles` | Record\<string, PolicyObject\> | Per-role overrides |
+| `mergeStrategy` | "override" \| "restrict" | Merge behavior |
+| `onResolve` | (resolved, ctx) => PolicyObject | Post-merge hook |

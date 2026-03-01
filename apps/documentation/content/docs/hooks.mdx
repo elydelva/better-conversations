@@ -1,0 +1,167 @@
+---
+title: Hooks
+description: Pipeline outcomes — next, refuse, transform, flag, defer, queue.
+---
+
+## Hook Results
+
+| Outcome | Description | Effect |
+|---------|-------------|--------|
+| `next` | Continue | Proceed to next hook or action |
+| `refuse` | Reject | Abort with reason |
+| `transform` | Modify data | Use transformed block/conversation data |
+| `flag` | Flag but continue | Mark for review, then proceed |
+| `defer` | Run async after | Fire-and-forget side effect |
+| `queue` | Queue for later | Defer processing (implementation-specific) |
+
+## Block Hooks
+
+### onBlockBeforeSend
+
+**When:** Before a block is created and persisted. **Context:** `block` (input), `conversation`, `author`, `participants`, `resolvedPolicy`, `isThread`, `isFirstReply`. **Outcomes:** `next`, `refuse`, `transform`, `flag`, `defer`, `queue`. **Usage:** Moderation, validation, rate limiting, body sanitization.
+
+```ts title="lib/conversation.ts"
+hooks: {
+  onBlockBeforeSend: async (ctx, outcomes) => {
+    if (ctx.block.body?.includes("spam")) {
+      return outcomes.refuse("Blocked content");
+    }
+    if (ctx.resolvedPolicy?.readOnly) {
+      return outcomes.refuse("Read-only");
+    }
+    // Transform: sanitize body
+    return outcomes.transform({
+      ...ctx.block,
+      body: sanitize(ctx.block.body),
+    });
+  },
+}
+```
+
+### onBlockAfterSend
+
+**When:** After a block has been created and persisted. **Context:** `block` (created), `conversation`, `author`, `participants`. **Outcomes:** None — side effect only (`Promise<void>`). **Usage:** Real-time notifications, audit log, webhooks, analytics.
+
+```ts title="lib/conversation.ts"
+onBlockAfterSend: async (ctx) => {
+  await notifyParticipants(ctx.conversation, ctx.block);
+}
+```
+
+### onBlockBeforeDelete
+
+**When:** Before a block is soft-deleted (status → deleted). **Context:** `block`, `conversation`, `author`. **Outcomes:** `next`, `refuse`. **Usage:** Check permissions (e.g. authorCanDelete), prevent deletion by policy.
+
+```ts title="lib/conversation.ts"
+onBlockBeforeDelete: async (ctx, outcomes) => {
+  if (!ctx.authorCanDelete) return outcomes.refuse("Cannot delete");
+  return outcomes.next();
+}
+```
+
+## Conversation Hooks
+
+### onConversationBeforeCreate
+
+**When:** Before a conversation is created. **Context:** `data` (title, status, createdBy, participants, etc.), `createdBy` (Chatter). **Outcomes:** `next`, `refuse`, `transform`. **Usage:** Limit participant count, validate fields, enrich metadata.
+
+```ts title="lib/conversation.ts"
+onConversationBeforeCreate: async (ctx, outcomes) => {
+  if (ctx.data.participants.length > 10) {
+    return outcomes.refuse("Too many participants");
+  }
+  return outcomes.next();
+}
+```
+
+### onConversationAfterCreate
+
+**When:** After a conversation has been created and its participants recorded. **Context:** `conversation` (created), `participants`. **Outcomes:** None — side effect only. **Usage:** Initial welcome message, analytics, external sync.
+
+```ts title="lib/conversation.ts"
+onConversationAfterCreate: async (ctx) => {
+  await sendInitialWelcomeBlock(ctx.conversation.id, ctx.participants);
+}
+```
+
+### onConversationStatusChange
+
+**When:** When a conversation status changes (e.g. `open` → `archived`). **Context:** `conversation`, `previousStatus`, `nextStatus`, `triggeredBy` (Chatter). **Outcomes:** `next`, `refuse`. **Usage:** Check permissions before archiving, block certain transitions.
+
+```ts title="lib/conversation.ts"
+onConversationStatusChange: async (ctx, outcomes) => {
+  if (ctx.nextStatus === "archived" && !hasArchivePermission(ctx.triggeredBy)) {
+    return outcomes.refuse("Cannot archive");
+  }
+  return outcomes.next();
+}
+```
+
+## Participant Hooks
+
+### onParticipantBeforeJoin
+
+**When:** Before a participant is added to a conversation. **Context:** `conversation`, `chatter`, `role`, `participants` (current list). **Outcomes:** `next`, `refuse`. **Usage:** Enforce `maxParticipants`, allowlist, check chatter permissions.
+
+```ts title="lib/conversation.ts"
+onParticipantBeforeJoin: async (ctx, outcomes) => {
+  const policy = await resolvePolicy(ctx.chatter.id, ctx.conversation.id);
+  if (policy.maxParticipants && ctx.participants.length >= policy.maxParticipants) {
+    return outcomes.refuse("Conversation full");
+  }
+  return outcomes.next();
+}
+```
+
+### onParticipantBeforeLeave
+
+**When:** Before a participant leaves a conversation (removal or `left_at`). **Context:** `conversation`, `participant`, `chatter`. **Outcomes:** `next`, `refuse`. **Usage:** Prevent last owner from leaving, conditional cleanup.
+
+```ts title="lib/conversation.ts"
+onParticipantBeforeLeave: async (ctx, outcomes) => {
+  const ownerCount = await countOwners(ctx.conversation.id);
+  if (ctx.participant.role === "owner" && ownerCount <= 1) {
+    return outcomes.refuse("Reassign ownership before leaving");
+  }
+  return outcomes.next();
+}
+```
+
+### onParticipantAfterJoin
+
+**When:** After a participant has been added to a conversation. **Context:** `conversation`, `chatter`, `role`, `participants`. **Outcomes:** None — side effect only. **Usage:** Welcome notification, analytics, sync.
+
+```ts title="lib/conversation.ts"
+onParticipantAfterJoin: async (ctx) => {
+  await sendWelcomeNotification(ctx.conversation.id, ctx.chatter.id);
+}
+```
+
+## Thread Hooks
+
+### onThreadCreated
+
+**When:** When the first reply block in a thread is sent (thread creation). **Context:** Same as `onBlockBeforeSend` + `parentBlock`. **Outcomes:** `next`, `refuse`, `transform`, `flag`, `defer`, `queue`. **Usage:** Apply thread-level policy, close threads.
+
+```ts title="lib/conversation.ts"
+onThreadCreated: async (ctx, outcomes) => {
+  const threadPolicy = await getThreadPolicy(ctx.conversation.id, ctx.block.threadParentId);
+  if (threadPolicy?.threadClosed) return outcomes.refuse("Thread closed");
+  return outcomes.next();
+}
+```
+
+## Outcome Helpers
+
+```ts title="lib/hooks.ts"
+import { createBlockOutcomes } from "@better-conversation/core";
+
+// In your hook
+const outcomes = createBlockOutcomes();
+return outcomes.refuse("Invalid");
+return outcomes.transform({ ...block, body: "Sanitized" });
+return outcomes.flag("Needs review");
+return outcomes.defer(async () => {
+  await sendNotification();
+});
+```

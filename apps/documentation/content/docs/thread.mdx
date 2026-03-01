@@ -1,0 +1,57 @@
+---
+title: Thread
+description: Tree of blocks — root has threadParentId null; replies reference parent block ID.
+---
+
+## Structure
+
+```
+Root block (threadParentId: null)
+├── Reply 1 (threadParentId: root.id)
+│   ├── Reply 1.1
+│   └── Reply 1.2
+└── Reply 2 (threadParentId: root.id)
+```
+
+## Send a Reply
+
+```ts title="example.ts"
+const reply = await client.blocks.send(conversationId, {
+  authorId: chatterId,
+  type: "text",
+  body: "This is a reply",
+  threadParentId: parentBlockId,
+});
+```
+
+## List Thread Replies
+
+```ts title="example.ts"
+const { items } = await client.blocks.list(conversationId, {
+  threadParentId: parentBlockId,
+  limit: 20,
+});
+```
+
+## Policy Levels
+
+Threads have their own policy level. When resolving policy for a block in a thread:
+
+1. Global
+2. Role (participant's role)
+3. Chatter
+4. Conversation
+5. **Thread** (scope: `threadParentBlockId`)
+
+Thread-specific policies allow different rules per thread (e.g. locked thread, rate limits).
+
+## Thread Limits
+
+Policy fields that affect threads:
+
+| Field | Description | Default |
+|-------|-------------|---------|
+| `threadsEnabled` | Whether threads are allowed | `true` |
+| `maxThreadDepth` | Max nesting depth (1 = one level of replies) | `1` |
+| `maxThreadReplies` | Max replies per parent | — |
+| `threadClosed` | Thread closed (no new replies) | `false` |
