@@ -49,6 +49,6 @@ export function createHonoHandler(engine: ConversationEngine, options?: CreateHo
     if (coreRes.status === 204) {
       return c.body(null, 204);
     }
-    return c.json(coreRes.body ?? null, coreRes.status);
+    return c.json(coreRes.body ?? null, coreRes.status as 200 | 201 | 400 | 401 | 403 | 404 | 500);
   };
 }

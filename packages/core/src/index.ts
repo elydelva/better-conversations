@@ -22,7 +22,7 @@ export type {
   ConversationStatus,
 } from "./types/index.js";
 
-export { createAdapterHelpers } from "./adapter/index.js";
+export { createAdapterHelpers, createUnsupportedRegistriesAdapter } from "./adapter/index.js";
 export type {
   AdapterOptions,
   DatabaseAdapter,
@@ -31,6 +31,7 @@ export type {
   ParticipantAdapter,
   BlockAdapter,
   PermissionAdapter,
+  RegistryAdapter,
 } from "./adapter/index.js";
 
 export type { ConversationConfig, ConversationPlugin } from "./config/index.js";

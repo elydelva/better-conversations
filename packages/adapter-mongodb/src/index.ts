@@ -1,4 +1,7 @@
-import { createAdapterHelpers } from "@better-conversation/core";
+import {
+  createAdapterHelpers,
+  createUnsupportedRegistriesAdapter,
+} from "@better-conversation/core";
 import type { DatabaseAdapter } from "@better-conversation/core";
 import { createBlocksAdapter } from "./blocks.js";
 import { createChattersAdapter } from "./chatters.js";
@@ -26,5 +29,6 @@ export function mongodbAdapter(_client?: unknown, options?: MongoAdapterOptions)
     participants: createParticipantsAdapter(ctx),
     blocks: createBlocksAdapter(ctx),
     permissions: createPermissionsAdapter(ctx),
+    registries: createUnsupportedRegistriesAdapter(),
   };
 }

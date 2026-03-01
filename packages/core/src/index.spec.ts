@@ -26,6 +26,42 @@ test("betterConversation returns engine with all services", () => {
   expect(engine.policies).toBeDefined();
 });
 
+test("engine.init registers default and additional blocks and roles", async () => {
+  const blockCalls: Array<{ type: string; isBuiltIn: boolean }> = [];
+  const roleCalls: Array<{ name: string; isBuiltIn: boolean }> = [];
+
+  const mockAdapter = createMockAdapter({
+    registries: {
+      upsertBlock: async (type, _schemaJson, isBuiltIn) => {
+        blockCalls.push({ type, isBuiltIn });
+      },
+      upsertRole: async (name, _extends, _policy, isBuiltIn) => {
+        roleCalls.push({ name, isBuiltIn });
+      },
+    },
+  });
+
+  const customBlock = createBlock({ type: "media", schema: undefined });
+  const customRole = createRole({
+    name: "moderator",
+    extends: "member",
+    policy: { allowedBlocks: ["text", "media"] },
+  });
+
+  const engine = betterConversation({
+    adapter: mockAdapter,
+    additionalBlocks: { media: customBlock },
+    additionalRoles: { moderator: customRole },
+  });
+
+  await engine.init();
+
+  expect(blockCalls).toContainEqual({ type: "text", isBuiltIn: true });
+  expect(blockCalls).toContainEqual({ type: "media", isBuiltIn: false });
+  expect(roleCalls).toContainEqual({ name: "member", isBuiltIn: true });
+  expect(roleCalls).toContainEqual({ name: "moderator", isBuiltIn: false });
+});
+
 test("ChatterService delegates to adapter.chatters.create", async () => {
   const createdChatter = createMockChatter({ entityId: "user_123" });
   const mockAdapter = createMockAdapter({
