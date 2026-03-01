@@ -26,13 +26,14 @@ This file provides context for AI assistants working on this codebase.
 ```
 packages/
 ├── core/           # @better-conversation/core — engine, interfaces, zero deps
+├── errors/        # @better-conversation/errors — ConversationError, domain errors
 ├── client/         # @better-conversation/client — browser SDK
 ├── adapter-drizzle/   # @better-conversation/adapter-drizzle — PostgreSQL
 ├── adapter-prisma/    # @better-conversation/adapter-prisma — placeholder
 ├── adapter-mongodb/   # @better-conversation/adapter-mongodb — placeholder
 ├── handler-next/      # @better-conversation/handler-next — Next.js
-├── handler-hono/      # @better-conversation/handler-hono — placeholder
-├── handler-express/   # @better-conversation/handler-express — placeholder
+├── handler-hono/      # @better-conversation/handler-hono — Hono
+├── handler-express/   # @better-conversation/handler-express — Express
 ├── blocks/         # @better-conversation/blocks — media, reaction, embed, poll
 ├── roles/          # @better-conversation/roles — moderator, admin, guest, support
 └── plugins/        # @better-conversation/plugins — sse, audit, rate-limit
@@ -67,6 +68,35 @@ bun run changeset    # Add a changeset
 4. **English**: All project documentation and user-facing text in English.
 5. **No type suppression**: Never use `as any`, `@ts-ignore`, or `@ts-expect-error` unless absolutely required and justified.
 6. **Workspace deps**: Use `workspace:*` for inter-package dependencies; use `catalog:` for shared versions.
+
+## Implementation Notes (for AI agents)
+
+### Adapters (`adapter-drizzle`, `adapter-prisma`, `adapter-mongodb`)
+
+- **Structure**: One file per domain (`chatters.ts`, `conversations.ts`, `participants.ts`, `blocks.ts`, `permissions.ts`), plus `shared.ts` (context type, helpers) and `index.ts` (assembles into `DatabaseAdapter`).
+- **Pattern**: `createXAdapter(ctx): XAdapter` — each part implements the core interface; context holds db/schema/helpers.
+- **Core contracts**: `ChatterAdapter`, `ConversationAdapter`, etc. and `DatabaseAdapter` in `packages/core/src/adapter/`.
+
+### Handlers (`handler-next`, `handler-express`, `handler-hono`)
+
+- **Common flow**: `toCoreRequest` → `dispatch(engine, coreReq, basePath)` → `toResponse`.
+- **Express**: Requires `express.json()` before handler; `basePath` strips mount prefix.
+- **Hono**: Uses `c.req.path`, `c.req.query()`, `c.req.text()` for body; returns `c.json()` or `c.body(null, 204)`.
+
+### Tests (TESTS_POLICY)
+
+- **Colocation**: `*.spec.ts` next to source; no separate `__tests__`.
+- **Fixtures**: `packages/core/src/fixtures/` — `createMockAdapter`, `createMockChatter`, etc. For packages without fixture export, define `createMockAdapter` inline in spec.
+- **Handler specs**: Mock `req`/`res` (Express) or `c` (Hono) with minimal shape (`method`, `path`, `query`, `body`).
+
+### Lint (Biome)
+
+- `noNonNullAssertion`: Use `result?.` not `result!` after `expect().not.toBeNull()`.
+- `noUselessSwitchCase`: Remove redundant `case "next":` before `default:`.
+
+### Commits
+
+- Prefer conventional commits: `feat(errors)`, `feat(core)`, `docs`, `test(core)`, `refactor(adapters)`, `refactor(handlers)`, `test(packages)`, `chore`.
 
 ## Reference
 
