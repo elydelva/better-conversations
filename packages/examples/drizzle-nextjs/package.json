@@ -1,0 +1,28 @@
+{
+  "name": "@better-conversation/example-drizzle-nextjs",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "db:push": "drizzle-kit push"
+  },
+  "dependencies": {
+    "@better-conversation/adapter-drizzle": "workspace:*",
+    "@better-conversation/core": "workspace:*",
+    "@better-conversation/handler-next": "workspace:*",
+    "better-sqlite3": "^11.0.0",
+    "drizzle-orm": "^0.45.1",
+    "next": "^15.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.0",
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "drizzle-kit": "^0.28.1",
+    "typescript": "^5.7.0"
+  }
+}

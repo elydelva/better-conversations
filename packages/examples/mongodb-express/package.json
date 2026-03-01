@@ -1,0 +1,19 @@
+{
+  "name": "@better-conversation/example-mongodb-express",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun run --hot src/index.ts"
+  },
+  "dependencies": {
+    "@better-conversation/adapter-mongodb": "workspace:*",
+    "@better-conversation/core": "workspace:*",
+    "@better-conversation/handler-express": "workspace:*",
+    "express": "^4.21.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "typescript": "^5.7.0"
+  }
+}

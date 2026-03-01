@@ -1,0 +1,24 @@
+{
+  "name": "@better-conversation/example-drizzle-express",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun run --hot src/index.ts",
+    "build": "tsc",
+    "db:push": "drizzle-kit push"
+  },
+  "dependencies": {
+    "@better-conversation/adapter-drizzle": "workspace:*",
+    "@better-conversation/core": "workspace:*",
+    "@better-conversation/handler-express": "workspace:*",
+    "drizzle-orm": "^0.45.1",
+    "express": "^4.21.0",
+    "postgres": "^3.4.4"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "drizzle-kit": "^0.28.1",
+    "typescript": "^5.7.0"
+  }
+}

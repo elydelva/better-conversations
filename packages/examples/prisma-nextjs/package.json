@@ -1,0 +1,26 @@
+{
+  "name": "@better-conversation/example-prisma-nextjs",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 3003",
+    "build": "prisma generate && next build",
+    "db:push": "prisma db push"
+  },
+  "dependencies": {
+    "@better-conversation/adapter-prisma": "workspace:*",
+    "@better-conversation/core": "workspace:*",
+    "@better-conversation/handler-next": "workspace:*",
+    "@prisma/client": "^6.0.0",
+    "next": "^15.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "prisma": "^6.0.0",
+    "typescript": "^5.7.0"
+  }
+}

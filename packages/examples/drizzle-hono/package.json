@@ -1,0 +1,24 @@
+{
+  "name": "@better-conversation/example-drizzle-hono",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun run --hot src/index.ts",
+    "build": "tsc",
+    "db:push": "drizzle-kit push"
+  },
+  "dependencies": {
+    "@better-conversation/adapter-drizzle": "workspace:*",
+    "@better-conversation/core": "workspace:*",
+    "@better-conversation/handler-hono": "workspace:*",
+    "drizzle-orm": "^0.45.1",
+    "hono": "^4.6.0"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/node": "^22.0.0",
+    "drizzle-kit": "^0.28.1",
+    "typescript": "^5.7.0"
+  }
+}
