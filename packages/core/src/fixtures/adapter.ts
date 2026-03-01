@@ -42,6 +42,11 @@ export function createMockAdapter(overrides: Partial<DatabaseAdapter> = {}): Dat
       upsertBlock: async () => {},
       upsertRole: async () => {},
     },
+    policies: {
+      find: async () => null,
+      upsert: async () => {},
+      delete: async () => {},
+    },
     ...overrides,
   };
 }

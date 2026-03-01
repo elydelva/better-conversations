@@ -37,8 +37,11 @@ describe("drizzleAdapter", () => {
     expect(adapter.blocks).toBeDefined();
     expect(adapter.permissions).toBeDefined();
     expect(adapter.registries).toBeDefined();
+    expect(adapter.policies).toBeDefined();
     expect(typeof adapter.registries.upsertBlock).toBe("function");
     expect(typeof adapter.registries.upsertRole).toBe("function");
+    expect(typeof adapter.policies.find).toBe("function");
+    expect(typeof adapter.policies.upsert).toBe("function");
     expect(typeof adapter.chatters.create).toBe("function");
     expect(typeof adapter.chatters.find).toBe("function");
     expect(typeof adapter.blocks.create).toBe("function");

@@ -1,4 +1,13 @@
-import { boolean, jsonb, pgEnum, pgTable, text, timestamp, varchar } from "drizzle-orm/pg-core";
+import {
+  boolean,
+  jsonb,
+  pgEnum,
+  pgTable,
+  text,
+  timestamp,
+  unique,
+  varchar,
+} from "drizzle-orm/pg-core";
 
 export function createSchema(prefix = "bc_") {
   const statusEnum = pgEnum(`${prefix}conversation_status`, ["open", "archived", "locked"]);
@@ -92,6 +101,27 @@ export function createSchema(prefix = "bc_") {
     registeredAt: timestamp("registered_at").defaultNow().notNull(),
   });
 
+  const policyLevelEnum = pgEnum(`${prefix}policy_level`, [
+    "global",
+    "role",
+    "chatter",
+    "conversation",
+    "thread",
+  ]);
+
+  const policies = pgTable(
+    `${prefix}policies`,
+    {
+      id: varchar("id", { length: 36 }).primaryKey(),
+      level: policyLevelEnum("level").notNull(),
+      scopeId: varchar("scope_id", { length: 255 }).notNull(),
+      policy: jsonb("policy").notNull(),
+      createdAt: timestamp("created_at").defaultNow().notNull(),
+      updatedAt: timestamp("updated_at").defaultNow().notNull(),
+    },
+    (t) => [unique().on(t.level, t.scopeId)]
+  );
+
   return {
     chatters,
     conversations,
@@ -100,5 +130,6 @@ export function createSchema(prefix = "bc_") {
     chatterPermissions,
     blockRegistry,
     roleRegistry,
+    policies,
   };
 }
