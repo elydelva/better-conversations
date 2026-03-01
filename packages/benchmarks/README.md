@@ -7,14 +7,17 @@ Benchmarks and stress tests for better-conversation using **SQLite** and **adapt
 From `packages/benchmarks`:
 
 ```bash
-# Run all benchmarks (creates schema, then runs)
+# Run benchmarks (migrates schema if needed, then runs)
 bun run bench
 
-# Run benchmarks only (schema must exist)
-bun run bench:only
-
-# Run stress tests (50 runs × 6 tests, concurrent)
+# Run stress tests (50 runs × 6 tests, concurrent, in-memory DB)
 bun run stress
+
+# Apply schema via drizzle-kit (optional; migrate runs automatically for bench)
+bun run db:push
+
+# Generate new migrations after schema changes
+bun run db:generate
 ```
 
 From repo root:
@@ -28,7 +31,7 @@ cd packages/benchmarks && bun run stress
 
 ## Environment
 
-- `BENCH_DB`: SQLite file path (default: `./benchmarks.db`)
+- `BENCH_DB`: SQLite file path (default: `./benchmarks.db` in package dir)
 
 ## Benchmarks
 

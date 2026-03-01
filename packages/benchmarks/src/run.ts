@@ -4,11 +4,20 @@
  *
  * Uses SQLite + adapter-drizzle for realistic I/O.
  * Benchmarks: chatters, conversations, participants, blocks, policies, permissions.
+ * Schema: applied via migrate (fresh db) or pre-existing from db:push.
  */
 
+import { join } from "node:path";
 import { drizzleAdapter } from "@better-conversation/adapter-drizzle";
 import { betterConversation } from "@better-conversation/core";
+import { migrate } from "drizzle-orm/bun-sqlite/migrator";
 import { db } from "./db.js";
+
+try {
+  migrate(db, { migrationsFolder: join(import.meta.dir, "..", "drizzle") });
+} catch {
+  // Schema may already exist from db:push — continue
+}
 
 const adapter = drizzleAdapter(db, { provider: "sqlite" });
 const engine = betterConversation({

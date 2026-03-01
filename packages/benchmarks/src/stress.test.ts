@@ -3,34 +3,42 @@
  * Run with: bun run stress
  *
  * Uses bun test --rerun-each 50 --concurrent to hammer all components
- * with real SQLite + adapter-drizzle.
+ * with real SQLite + adapter-drizzle. Uses in-memory DB for a fresh schema each run.
  */
 
+import { Database } from "bun:sqlite";
 import { beforeAll, expect, test } from "bun:test";
+import { join } from "node:path";
 import { drizzleAdapter } from "@better-conversation/adapter-drizzle";
 import { betterConversation } from "@better-conversation/core";
-import { db } from "./db.js";
+import { drizzle } from "drizzle-orm/bun-sqlite";
+import { migrate } from "drizzle-orm/bun-sqlite/migrator";
 
-const engine = betterConversation({
-  adapter: drizzleAdapter(db, { provider: "sqlite" }),
-  policies: {
-    global: {
-      sendCooldownMs: 0,
-      maxBlocksPerMinute: 999999,
-      maxBlocksPerHour: 999999,
-      maxBlocksPerDay: 999999,
-    },
-    onResolve: (resolved) => {
-      resolved.sendCooldownMs = 0;
-      resolved.maxBlocksPerMinute = 999999;
-      resolved.maxBlocksPerHour = 999999;
-      resolved.maxBlocksPerDay = 999999;
-      return resolved;
-    },
-  },
-});
+let engine: ReturnType<typeof betterConversation>;
 
 beforeAll(async () => {
+  const db = drizzle(new Database(":memory:", { create: true }));
+  migrate(db, {
+    migrationsFolder: join(import.meta.dir, "..", "drizzle"),
+  });
+  engine = betterConversation({
+    adapter: drizzleAdapter(db, { provider: "sqlite" }),
+    policies: {
+      global: {
+        sendCooldownMs: 0,
+        maxBlocksPerMinute: 999999,
+        maxBlocksPerHour: 999999,
+        maxBlocksPerDay: 999999,
+      },
+      onResolve: (resolved) => {
+        resolved.sendCooldownMs = 0;
+        resolved.maxBlocksPerMinute = 999999;
+        resolved.maxBlocksPerHour = 999999;
+        resolved.maxBlocksPerDay = 999999;
+        return resolved;
+      },
+    },
+  });
   await engine.init();
 });
 

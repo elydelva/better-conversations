@@ -3,10 +3,11 @@
   "version": "0.0.1",
   "type": "module",
   "scripts": {
-    "bench": "bun run db:push && bun run src/run.ts",
+    "bench": "bun run src/run.ts",
     "bench:only": "bun run src/run.ts",
     "db:push": "drizzle-kit push",
-    "stress": "bun run db:push && bun test src/stress.test.ts --rerun-each 50 --concurrent --max-concurrency 20",
+    "db:generate": "drizzle-kit generate",
+    "stress": "bun test src/stress.test.ts --rerun-each 50 --concurrent --max-concurrency 20",
     "build": "echo Benchmarks OK"
   },
   "dependencies": {
