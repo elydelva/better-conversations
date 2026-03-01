@@ -131,3 +131,23 @@ prismaAdapter(prisma, { tablePrefix: "my_conv_" });
 </CodeBlockTabs>
 
 Tables become `my_conv_chatters`, `my_conv_conversations`, etc.
+
+## Schema Language & Extensions
+
+The core defines a **schema language** (tables, columns, relations) that is ORM-agnostic. Plugins can contribute schema via `schemaContribution`:
+
+- **Tables** — New tables (e.g. `block_history` from plugin-history)
+- **Extensions** — Extra columns on existing tables (e.g. `lastReadAt` on `participants` from plugin-presence)
+
+When using the Drizzle adapter with `plugins`, the merged schema is translated to Drizzle tables. The base schema does not include presence columns; they are added only when the presence plugin is used.
+
+```ts title="Example: drizzleAdapter with plugins"
+import { drizzleAdapter } from "@better-conversation/adapter-drizzle";
+import { presencePlugin } from "@better-conversation/plugin-presence";
+import { historyPlugin } from "@better-conversation/plugin-history";
+
+const adapter = drizzleAdapter(db, {
+  provider: "pg",
+  plugins: [presencePlugin, historyPlugin],
+});
+```

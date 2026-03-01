@@ -1,0 +1,52 @@
+---
+title: Presence
+description: Mark-read, typing status, and last-seen for participants.
+---
+
+## Installation
+
+```bash
+bun add @better-conversation/plugin-presence
+```
+
+## Setup
+
+Presence extends the `participants` table with `lastReadAt`, `lastSeenAt`, and `typingUntil`. Use the Drizzle adapter with `plugins` so the schema is translated:
+
+```ts title="lib/conversation.ts"
+import { betterConversation } from "@better-conversation/core";
+import { drizzleAdapter } from "@better-conversation/adapter-drizzle";
+import { presencePlugin } from "@better-conversation/plugin-presence";
+import { db } from "./db";
+
+const adapter = drizzleAdapter(db, {
+  provider: "pg",
+  plugins: [presencePlugin],
+});
+
+const conv = betterConversation({
+  adapter,
+  plugins: [presencePlugin],
+});
+```
+
+## API
+
+| Method | Path | Description |
+|--------|------|-------------|
+| PATCH | `/conversations/:id/participants/:chatterId/read` | Mark conversation as read |
+| PATCH | `/conversations/:id/participants/:chatterId/typing` | Set typing status (body: `{ until?: number }` ms) |
+| GET | `/conversations/:id/participants/presence` | List presence info for active participants |
+
+## Engine API
+
+```ts
+const presence = conv.getPlugin<PresenceService>("presence");
+await presence.markRead(conversationId, chatterId);
+await presence.setTyping(conversationId, chatterId, new Date(Date.now() + 5000));
+const list = await presence.getPresence(conversationId);
+```
+
+## Hooks
+
+- `onParticipantAfterJoin` — Updates `lastSeenAt` when a participant joins.

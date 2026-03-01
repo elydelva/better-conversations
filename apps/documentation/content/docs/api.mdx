@@ -24,7 +24,6 @@ description: HTTP routes relative to handler base path (e.g. /api/conversation).
 | GET | /conversations/:id | Find conversation |
 | PATCH | /conversations/:id | Update conversation |
 | DELETE | /conversations/:id | Archive conversation |
-| GET | /conversations/:id/stream | SSE stream for real-time updates |
 
 ## Participants
 
@@ -33,7 +32,6 @@ description: HTTP routes relative to handler base path (e.g. /api/conversation).
 | GET | /conversations/:id/participants | List participants |
 | POST | /conversations/:id/participants | Add participant |
 | PATCH | /conversations/:id/participants/:chatterId | Set participant role |
-| PATCH | /conversations/:id/participants/:chatterId/read | Mark as read |
 | DELETE | /conversations/:id/participants/:chatterId | Remove participant |
 
 ## Blocks
@@ -44,6 +42,18 @@ description: HTTP routes relative to handler base path (e.g. /api/conversation).
 | POST | /conversations/:id/blocks | Send block |
 | PATCH | /conversations/:id/blocks/:blockId | Update block metadata |
 | DELETE | /conversations/:id/blocks/:blockId | Soft-delete block |
+
+## Plugin Routes
+
+When using the corresponding plugins:
+
+| Plugin | Method | Path | Description |
+|--------|--------|------|-------------|
+| [plugin-sse](/docs/plugins/sse) | GET | /conversations/:id/stream | SSE stream for real-time updates |
+| [plugin-presence](/docs/plugins/presence) | PATCH | /conversations/:id/participants/:chatterId/read | Mark as read |
+| [plugin-presence](/docs/plugins/presence) | PATCH | /conversations/:id/participants/:chatterId/typing | Set typing status |
+| [plugin-presence](/docs/plugins/presence) | GET | /conversations/:id/participants/presence | List presence info |
+| [plugin-history](/docs/plugins/history) | GET | /conversations/:id/blocks/:blockId/history | Block edit history |
 
 ## Policies
 

@@ -12,8 +12,17 @@ handlers/      → Optional HTTP bridges. Next.js, Hono, Express. Take a Convers
 blocks/        → Block plugins (media, reaction, embed, poll). Each enriches the core type registry.
 roles/         → Role plugins (moderator, admin). Each carries a policy and registers in DB.
 client/        → Type-safe browser SDK. Fetches handler endpoints. Infers block/role types.
-plugins/       → Extensions: realtime (SSE, WS), audit log, rate limiting, archival.
+plugins/       → Extensions: SSE, presence, history, audit log, rate limiting.
 ```
+
+## Extensibility
+
+The engine is designed for plugins that add:
+
+- **Routes** — Merged with core routes (e.g. `/conversations/:id/stream` from plugin-sse)
+- **Hooks** — Merged with config hooks (e.g. `onBlockAfterUpdate` from plugin-history)
+- **Services** — Attached to engine via `createServices` (e.g. `engine.getPlugin("presence")`)
+- **Schema** — Tables and column extensions via `schemaContribution` (Schema Language)
 
 ## DatabaseAdapter Interface
 
@@ -64,3 +73,4 @@ export interface ConversationConfig<TBlocks, TRoles> {
 5. **Zero vendor** — No external service required. Realtime is opt-in.
 6. **Type-safety end-to-end** — Block metadata types flow from `createBlock()` to the browser client.
 7. **Policies = merge tree** — Rules compose by level. More specific scope wins. Defaults are safe.
+8. **Schema language** — Core defines an ORM-agnostic schema format; adapters translate to Drizzle, Prisma, etc. Plugins extend the schema without knowing the ORM.

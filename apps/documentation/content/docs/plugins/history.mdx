@@ -1,0 +1,48 @@
+---
+title: History
+description: Block edit history — stores previous versions when blocks are updated.
+---
+
+## Installation
+
+```bash
+bun add @better-conversation/plugin-history
+```
+
+## Setup
+
+History adds a `block_history` table and requires the Drizzle adapter with `plugins`:
+
+```ts title="lib/conversation.ts"
+import { betterConversation } from "@better-conversation/core";
+import { drizzleAdapter } from "@better-conversation/adapter-drizzle";
+import { historyPlugin } from "@better-conversation/plugin-history";
+import { db } from "./db";
+
+const adapter = drizzleAdapter(db, {
+  provider: "pg",
+  plugins: [historyPlugin],
+});
+
+const conv = betterConversation({
+  adapter,
+  plugins: [historyPlugin],
+});
+```
+
+## API
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/conversations/:id/blocks/:blockId/history` | List edit history for a block |
+
+## Engine API
+
+```ts
+const history = conv.getPlugin<HistoryService>("history");
+const entries = await history.list(blockId);
+```
+
+## Hooks
+
+- `onBlockAfterUpdate` — Records the previous version (body, metadata) before the update is applied. The core invokes this automatically when `blocks.updateMeta` is called.
