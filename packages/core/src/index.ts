@@ -89,6 +89,24 @@ export type { CreateBlockOptions, BlockHookConfig } from "./block/index.js";
 export type { CreateRoleOptions } from "./role/index.js";
 
 export {
+  baseSchemaContribution,
+  buildSchema,
+  mergeSchemas,
+} from "./schema/index.js";
+export type {
+  ColumnDef,
+  ColumnType,
+  MergedSchema,
+  RelationDef,
+  SchemaContribution,
+  TableDef,
+  TableExtension,
+  BuildSchemaOptions,
+  SchemaContributor,
+  MergeSchemasOptions,
+} from "./schema/index.js";
+
+export {
   dispatch,
   parseJsonBody,
   errorToResponse,
