@@ -32,7 +32,17 @@ async function toCoreRequest(req: NextRequest): Promise<CoreRequest> {
   };
 }
 
-function toNextResponse(status: number, body?: unknown): Response {
+function toNextResponse(
+  status: number,
+  body?: unknown,
+  options?: { stream?: ReadableStream; headers?: Record<string, string> }
+): Response {
+  if (options?.stream) {
+    return new Response(options.stream, {
+      status,
+      headers: options.headers,
+    });
+  }
   if (status === 204) {
     return new Response(null, { status: 204 });
   }
@@ -47,7 +57,10 @@ async function handle(
   const basePath = options.basePath ?? "";
   const coreReq = await toCoreRequest(req);
   const coreRes = await dispatch(engine, coreReq, basePath);
-  return toNextResponse(coreRes.status, coreRes.body);
+  return toNextResponse(coreRes.status, coreRes.body, {
+    stream: coreRes.stream,
+    headers: coreRes.headers,
+  });
 }
 
 export function createNextHandler(engine: ConversationEngine, options?: CreateNextHandlerOptions) {

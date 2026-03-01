@@ -41,7 +41,27 @@ async function toCoreRequest(req: Request): Promise<CoreRequest> {
   };
 }
 
-function sendResponse(res: Response, status: number, body?: unknown): void {
+function sendResponse(
+  res: Response,
+  status: number,
+  body?: unknown,
+  options?: { stream?: ReadableStream; headers?: Record<string, string> }
+): void {
+  if (options?.stream) {
+    res.writeHead(status, options.headers);
+    const reader = options.stream.getReader();
+    const pump = (): Promise<void> =>
+      reader.read().then(({ done, value }) => {
+        if (done) {
+          res.end();
+          return;
+        }
+        res.write(Buffer.from(value));
+        return pump();
+      });
+    pump();
+    return;
+  }
   if (status === 204) {
     res.sendStatus(204);
     return;
@@ -58,6 +78,9 @@ export function createExpressHandler(
   return async (req: Request, res: Response) => {
     const coreReq = await toCoreRequest(req);
     const coreRes = await dispatch(engine, coreReq, basePath);
-    sendResponse(res, coreRes.status, coreRes.body);
+    sendResponse(res, coreRes.status, coreRes.body, {
+      stream: coreRes.stream,
+      headers: coreRes.headers,
+    });
   };
 }

@@ -46,6 +46,12 @@ export function createHonoHandler(engine: ConversationEngine, options?: CreateHo
     const coreReq = await toCoreRequest(c);
     const coreRes = await dispatch(engine, coreReq, basePath);
 
+    if (coreRes.stream) {
+      return new Response(coreRes.stream, {
+        status: coreRes.status,
+        headers: coreRes.headers,
+      });
+    }
     if (coreRes.status === 204) {
       return c.body(null, 204);
     }
