@@ -1,3 +1,4 @@
+import { PolicyNotImplementedError } from "@better-conversation/errors";
 import type { PolicyObject, ResolvedPolicy } from "../policy/index.js";
 
 export class PolicyService {
@@ -26,22 +27,22 @@ export class PolicyService {
   }
 
   async setGlobal(_policy: Partial<PolicyObject>): Promise<void> {
-    throw new Error("Not implemented: PolicyService.setGlobal");
+    throw new PolicyNotImplementedError("setGlobal");
   }
 
   async setRole(_role: string, _policy: Partial<PolicyObject>): Promise<void> {
-    throw new Error("Not implemented: PolicyService.setRole");
+    throw new PolicyNotImplementedError("setRole");
   }
 
   async setChatter(_chatterId: string, _policy: Partial<PolicyObject>): Promise<void> {
-    throw new Error("Not implemented: PolicyService.setChatter");
+    throw new PolicyNotImplementedError("setChatter");
   }
 
   async setConversation(_conversationId: string, _policy: Partial<PolicyObject>): Promise<void> {
-    throw new Error("Not implemented: PolicyService.setConversation");
+    throw new PolicyNotImplementedError("setConversation");
   }
 
   async setThread(_threadParentBlockId: string, _policy: Partial<PolicyObject>): Promise<void> {
-    throw new Error("Not implemented: PolicyService.setThread");
+    throw new PolicyNotImplementedError("setThread");
   }
 }

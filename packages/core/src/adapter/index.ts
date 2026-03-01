@@ -1,3 +1,5 @@
+export { createAdapterHelpers } from "./helpers.js";
+export type { AdapterOptions } from "./helpers.js";
 export type { ChatterAdapter } from "./ChatterAdapter.interface.js";
 export type { ConversationAdapter } from "./ConversationAdapter.interface.js";
 export type { ParticipantAdapter } from "./ParticipantAdapter.interface.js";

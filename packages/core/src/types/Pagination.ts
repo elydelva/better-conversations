@@ -11,6 +11,7 @@ export interface ConversationFilters {
   entityType?: string;
   entityId?: string;
   status?: ConversationStatus;
+  chatterId?: string;
   limit?: number;
   cursor?: string;
 }
@@ -20,6 +21,7 @@ export interface BlockFilters {
   authorId?: string;
   type?: string;
   status?: BlockStatus;
+  threadParentId?: string | null;
   after?: Date;
   before?: Date;
   limit?: number;

@@ -19,12 +19,22 @@ export class ConversationEngine<
   readonly policies: PolicyService;
 
   constructor(config: ConversationConfig<TBlocks, TRoles>) {
-    const { adapter } = config;
+    const { adapter, hooks, generateId } = config;
 
     this.chatters = new ChatterService(adapter.chatters);
     this.conversations = new ConversationService(adapter.conversations);
     this.participants = new ParticipantService(adapter.participants);
-    this.blocks = new BlockService(adapter.blocks);
+    this.blocks = new BlockService({
+      adapter,
+      hooks: hooks
+        ? {
+            onBlockBeforeSend: hooks.onBlockBeforeSend,
+            onBlockAfterSend: hooks.onBlockAfterSend,
+            onBlockBeforeDelete: hooks.onBlockBeforeDelete,
+          }
+        : undefined,
+      generateId,
+    });
     this.permissions = new PermissionService(adapter.permissions);
     this.policies = new PolicyService();
   }

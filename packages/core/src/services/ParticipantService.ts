@@ -1,3 +1,7 @@
+import {
+  ParticipantAlreadyJoinedError,
+  ParticipantNotFoundError,
+} from "@better-conversation/errors";
 import type { ParticipantAdapter } from "../adapter/index.js";
 import type { Participant, ParticipantInput } from "../types/index.js";
 
@@ -13,6 +17,10 @@ export class ParticipantService {
   }
 
   async add(data: ParticipantInput): Promise<Participant> {
+    const existing = await this.participants.find(data.conversationId, data.chatterId);
+    if (existing && !existing.leftAt) {
+      throw new ParticipantAlreadyJoinedError(data.conversationId, data.chatterId);
+    }
     return this.participants.add(data);
   }
 
@@ -27,9 +35,7 @@ export class ParticipantService {
   async setRole(conversationId: string, chatterId: string, role: string): Promise<Participant> {
     const participant = await this.participants.find(conversationId, chatterId);
     if (!participant) {
-      throw new Error(
-        `Participant not found: chatter ${chatterId} in conversation ${conversationId}`
-      );
+      throw new ParticipantNotFoundError(conversationId, chatterId);
     }
     return this.participants.update(participant.id, { role });
   }
@@ -37,9 +43,7 @@ export class ParticipantService {
   async markRead(conversationId: string, chatterId: string): Promise<Participant> {
     const participant = await this.participants.find(conversationId, chatterId);
     if (!participant) {
-      throw new Error(
-        `Participant not found: chatter ${chatterId} in conversation ${conversationId}`
-      );
+      throw new ParticipantNotFoundError(conversationId, chatterId);
     }
     return this.participants.update(participant.id, { lastReadAt: new Date() });
   }

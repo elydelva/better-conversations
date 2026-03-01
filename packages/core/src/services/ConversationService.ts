@@ -1,3 +1,4 @@
+import { ConversationArchivedError, ConversationNotFoundError } from "@better-conversation/errors";
 import type { ConversationAdapter } from "../adapter/index.js";
 import type {
   Conversation,
@@ -26,10 +27,24 @@ export class ConversationService {
   }
 
   async update(id: string, data: Partial<Conversation>): Promise<Conversation> {
+    const existing = await this.conversations.find(id);
+    if (!existing) {
+      throw new ConversationNotFoundError(id);
+    }
+    if (existing.status === "archived") {
+      throw new ConversationArchivedError(id);
+    }
     return this.conversations.update(id, data);
   }
 
   async archive(id: string): Promise<Conversation> {
+    const existing = await this.conversations.find(id);
+    if (!existing) {
+      throw new ConversationNotFoundError(id);
+    }
+    if (existing.status === "archived") {
+      throw new ConversationArchivedError(id);
+    }
     return this.conversations.update(id, { status: "archived" });
   }
 }

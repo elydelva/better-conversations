@@ -1,4 +1,10 @@
 export type { RefuseOptions, HookResult, ConversationHooks } from "./interface.js";
+export {
+  createBlockOutcomes,
+  createDeleteOutcomes,
+  createConversationOutcomes,
+  createParticipantOutcomes,
+} from "./OutcomeBuilder.js";
 export type { BlockBeforeSendCtx, BlockOutcomes } from "./BlockBeforeSend.js";
 export type { BlockAfterSendCtx } from "./BlockAfterSend.js";
 export type { BlockDeleteCtx, DeleteOutcomes } from "./BlockDelete.js";

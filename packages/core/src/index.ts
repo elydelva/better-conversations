@@ -22,7 +22,9 @@ export type {
   ConversationStatus,
 } from "./types/index.js";
 
+export { createAdapterHelpers } from "./adapter/index.js";
 export type {
+  AdapterOptions,
   DatabaseAdapter,
   ChatterAdapter,
   ConversationAdapter,
@@ -73,3 +75,20 @@ export type {
 
 export type { CreateBlockOptions, BlockHookConfig } from "./block/index.js";
 export type { CreateRoleOptions } from "./role/index.js";
+
+export {
+  dispatch,
+  parseJsonBody,
+  errorToResponse,
+  successResponse,
+  matchPath,
+  routes,
+  findRoute,
+} from "./handler/index.js";
+export type {
+  CoreRequest,
+  CoreResponse,
+  RouteHandler,
+  Route,
+  PathMatch,
+} from "./handler/index.js";
