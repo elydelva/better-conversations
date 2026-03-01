@@ -5,6 +5,7 @@ import { createChattersAdapter } from "./chatters.js";
 import { createConversationsAdapter } from "./conversations.js";
 import { createParticipantsAdapter } from "./participants.js";
 import { createPermissionsAdapter } from "./permissions.js";
+import { createRegistriesAdapter } from "./registries.js";
 import { createSchema } from "./schema.js";
 import type { DrizzleAdapterContext } from "./shared.js";
 
@@ -33,6 +34,7 @@ export function drizzleAdapter(
     participants: createParticipantsAdapter(ctx),
     blocks: createBlocksAdapter(ctx),
     permissions: createPermissionsAdapter(ctx),
+    registries: createRegistriesAdapter(ctx),
   };
 }
 

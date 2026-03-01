@@ -77,11 +77,28 @@ export function createSchema(prefix = "bc_") {
     granted: boolean("granted").default(true).notNull(),
   });
 
+  const blockRegistry = pgTable(`${prefix}block_registry`, {
+    type: varchar("type", { length: 128 }).primaryKey(),
+    schemaJson: jsonb("schema_json").notNull(),
+    isBuiltIn: boolean("is_built_in").default(false).notNull(),
+    registeredAt: timestamp("registered_at").defaultNow().notNull(),
+  });
+
+  const roleRegistry = pgTable(`${prefix}role_registry`, {
+    name: varchar("name", { length: 64 }).primaryKey(),
+    extends: varchar("extends", { length: 64 }),
+    policy: jsonb("policy").notNull(),
+    isBuiltIn: boolean("is_built_in").default(false).notNull(),
+    registeredAt: timestamp("registered_at").defaultNow().notNull(),
+  });
+
   return {
     chatters,
     conversations,
     participants,
     blocks,
     chatterPermissions,
+    blockRegistry,
+    roleRegistry,
   };
 }
