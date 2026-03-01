@@ -1,5 +1,5 @@
 import type { Block, BlockAdapter, BlockFilters, BlockInput } from "@better-conversation/core";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, gte } from "drizzle-orm";
 import type { DrizzleAdapterContext } from "./shared.js";
 import { toDate, val } from "./shared.js";
 
@@ -43,6 +43,7 @@ export function createBlocksAdapter(ctx: DrizzleAdapterContext): BlockAdapter {
       if (filters.status) conditions.push(eq(blocks.status, filters.status));
       if (filters.threadParentId != null)
         conditions.push(eq(blocks.threadParentId, filters.threadParentId));
+      if (filters.after) conditions.push(gte(blocks.createdAt, filters.after));
       const limit = filters.limit ?? 50;
       const result = await db
         .select()

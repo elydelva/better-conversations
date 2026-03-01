@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import {
   BlockNotFoundError,
+  BlockRateLimitError,
   BlockRefusedError,
   ChatterNotFoundError,
   ConversationNotFoundError,
@@ -14,6 +15,7 @@ import {
 } from "../fixtures/index.js";
 import type { BlockBeforeSendCtx } from "../hooks/BlockBeforeSend.js";
 import type { BlockDeleteCtx } from "../hooks/BlockDelete.js";
+import { defaultRoleRegistry } from "../registry/defaultRoleRegistry.js";
 import { BlockService } from "./BlockService.js";
 
 describe("BlockService", () => {
@@ -193,6 +195,73 @@ describe("BlockService", () => {
         type: "text",
       })
     ).rejects.toThrow(ConversationNotFoundError);
+  });
+
+  test("send throws BlockRefusedError when policy is readOnly", async () => {
+    const readOnlyAdapter = {
+      ...baseAdapter,
+      participants: {
+        list: async () => [],
+        find: async () => createMockParticipant({ role: "observer" }),
+        add: async () => createMockParticipant(),
+        update: async () => createMockParticipant(),
+        remove: async () => {},
+      },
+    };
+    const policyService = new (await import("./PolicyService.js")).PolicyService({
+      adapter: readOnlyAdapter,
+      roleRegistry: defaultRoleRegistry,
+    });
+    const service = new BlockService({
+      adapter: readOnlyAdapter,
+      policyService,
+    });
+    await expect(
+      service.send({
+        conversationId: "conv_1",
+        authorId: "chatter_1",
+        type: "text",
+      })
+    ).rejects.toThrow(BlockRefusedError);
+  });
+
+  test("send throws BlockRateLimitError when maxBlocksPerMinute exceeded", async () => {
+    const rateLimitAdapter = {
+      ...baseAdapter,
+      participants: {
+        list: async () => [],
+        find: async () => createMockParticipant({ role: "member" }),
+        add: async () => createMockParticipant(),
+        update: async () => createMockParticipant(),
+        remove: async () => {},
+      },
+      blocks: {
+        find: async () => null,
+        list: async () => ({
+          items: Array(20).fill(createMockBlock()),
+          total: 20,
+          hasMore: false,
+        }),
+        create: async () => createMockBlock(),
+        update: async () => createMockBlock(),
+        softDelete: async () => {},
+      },
+    };
+    const policyService = new (await import("./PolicyService.js")).PolicyService({
+      adapter: rateLimitAdapter,
+      roleRegistry: defaultRoleRegistry,
+    });
+    const service = new BlockService({
+      adapter: rateLimitAdapter,
+      policyService,
+    });
+    await expect(
+      service.send({
+        conversationId: "conv_1",
+        authorId: "chatter_1",
+        type: "text",
+      })
+    ).rejects.toThrow(BlockRateLimitError);
   });
 
   test("send throws ChatterNotFoundError when author not found", async () => {

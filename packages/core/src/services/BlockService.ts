@@ -1,5 +1,6 @@
 import {
   BlockNotFoundError,
+  BlockRateLimitError,
   BlockRefusedError,
   ChatterNotFoundError,
   ConversationNotFoundError,
@@ -13,9 +14,11 @@ import type { BlockDeleteCtx } from "../hooks/BlockDelete.js";
 import { createBlockOutcomes, createDeleteOutcomes } from "../hooks/OutcomeBuilder.js";
 import type { HookResult } from "../hooks/common.js";
 import type { Block, BlockFilters, BlockInput, Paginated } from "../types/index.js";
+import type { PolicyService } from "./PolicyService.js";
 
 export interface BlockServiceConfig {
   adapter: DatabaseAdapter;
+  policyService?: PolicyService;
   hooks?: {
     onBlockBeforeSend?: (ctx: BlockBeforeSendCtx, outcomes: BlockOutcomes) => Promise<HookResult>;
     onBlockAfterSend?: (ctx: BlockAfterSendCtx) => Promise<void>;
@@ -57,6 +60,103 @@ export class BlockService {
         ).items.length === 0
       : false;
 
+    let resolvedPolicy: BlockBeforeSendCtx["resolvedPolicy"];
+    if (this.config.policyService) {
+      resolvedPolicy = await this.config.policyService.resolve(
+        input.authorId,
+        input.conversationId,
+        input.threadParentId ?? undefined
+      );
+      if (resolvedPolicy.readOnly) {
+        throw new BlockRefusedError("Conversation is read-only", {
+          code: "READ_ONLY",
+          expose: true,
+        });
+      }
+      if (resolvedPolicy.threadClosed && isThread) {
+        throw new BlockRefusedError("Thread is closed", {
+          code: "THREAD_CLOSED",
+          expose: true,
+        });
+      }
+      if (resolvedPolicy.deniedBlocks?.includes(input.type)) {
+        throw new BlockRefusedError(`Block type "${input.type}" is denied`, {
+          code: "BLOCK_TYPE_DENIED",
+          expose: true,
+        });
+      }
+      if (resolvedPolicy.allowedBlocks && resolvedPolicy.allowedBlocks !== "*") {
+        const allowed = resolvedPolicy.allowedBlocks.includes(input.type);
+        if (!allowed) {
+          throw new BlockRefusedError(`Block type "${input.type}" is not allowed`, {
+            code: "BLOCK_TYPE_NOT_ALLOWED",
+            expose: true,
+          });
+        }
+      }
+      const maxLen = resolvedPolicy.maxBlockBodyLength ?? 4000;
+      if (input.body != null && input.body.length > maxLen) {
+        throw new BlockRefusedError(`Block body exceeds max length (${maxLen})`, {
+          code: "BODY_TOO_LONG",
+          expose: true,
+        });
+      }
+      const maxPerMin = resolvedPolicy.maxBlocksPerMinute;
+      if (maxPerMin != null) {
+        const oneMinAgo = new Date(Date.now() - 60_000);
+        const recent = await adapter.blocks.list({
+          conversationId: input.conversationId,
+          authorId: input.authorId,
+          after: oneMinAgo,
+          limit: maxPerMin + 1,
+        });
+        if (recent.items.length >= maxPerMin) {
+          throw new BlockRateLimitError(60);
+        }
+      }
+      const maxPerHour = resolvedPolicy.maxBlocksPerHour;
+      if (maxPerHour != null) {
+        const oneHourAgo = new Date(Date.now() - 3600_000);
+        const recent = await adapter.blocks.list({
+          conversationId: input.conversationId,
+          authorId: input.authorId,
+          after: oneHourAgo,
+          limit: maxPerHour + 1,
+        });
+        if (recent.items.length >= maxPerHour) {
+          throw new BlockRateLimitError(3600);
+        }
+      }
+      const maxPerDay = resolvedPolicy.maxBlocksPerDay;
+      if (maxPerDay != null) {
+        const oneDayAgo = new Date(Date.now() - 86400_000);
+        const recent = await adapter.blocks.list({
+          conversationId: input.conversationId,
+          authorId: input.authorId,
+          after: oneDayAgo,
+          limit: maxPerDay + 1,
+        });
+        if (recent.items.length >= maxPerDay) {
+          throw new BlockRateLimitError(86400);
+        }
+      }
+      const cooldown = resolvedPolicy.sendCooldownMs ?? 0;
+      if (cooldown > 0) {
+        const recent = await adapter.blocks.list({
+          conversationId: input.conversationId,
+          authorId: input.authorId,
+          limit: 1,
+        });
+        const last = recent.items[0];
+        if (last?.createdAt) {
+          const elapsed = Date.now() - new Date(last.createdAt).getTime();
+          if (elapsed < cooldown) {
+            throw new BlockRateLimitError(Math.ceil(cooldown / 1000));
+          }
+        }
+      }
+    }
+
     const ctx: BlockBeforeSendCtx = {
       block: input,
       conversation,
@@ -65,6 +165,7 @@ export class BlockService {
       adapter,
       isThread,
       isFirstReply,
+      resolvedPolicy,
     };
 
     const outcomes = createBlockOutcomes();

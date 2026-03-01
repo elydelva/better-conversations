@@ -36,8 +36,14 @@ export class ConversationEngine<
     this.chatters = new ChatterService(adapter.chatters);
     this.conversations = new ConversationService(adapter.conversations);
     this.participants = new ParticipantService(adapter.participants);
+    this.policies = new PolicyService({
+      adapter,
+      policiesConfig: config.policies,
+      roleRegistry: { ...defaultRoleRegistry, ...config.additionalRoles },
+    });
     this.blocks = new BlockService({
       adapter,
+      policyService: this.policies,
       hooks: hooks
         ? {
             onBlockBeforeSend: hooks.onBlockBeforeSend,
@@ -48,11 +54,6 @@ export class ConversationEngine<
       generateId,
     });
     this.permissions = new PermissionService(adapter.permissions);
-    this.policies = new PolicyService({
-      adapter,
-      policiesConfig: config.policies,
-      roleRegistry: { ...defaultRoleRegistry, ...config.additionalRoles },
-    });
   }
 
   async init(): Promise<void> {
