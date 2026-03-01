@@ -1,0 +1,62 @@
+---
+title: Rate Limit
+description: Limit blocks per chatter per conversation within a configurable time window.
+---
+
+## Installation
+
+```bash
+bun add @better-conversation/plugin-rate-limit
+```
+
+## Setup
+
+```ts title="lib/conversation.ts"
+import { betterConversation } from "@better-conversation/core";
+import { createRateLimitPlugin } from "@better-conversation/plugin-rate-limit";
+
+const conv = betterConversation({
+  adapter,
+  plugins: [
+    createRateLimitPlugin({
+      limit: 60,
+      windowMs: 60_000,
+    }),
+  ],
+});
+```
+
+## Options
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `limit` | `60` | Max blocks per window |
+| `windowMs` | `60_000` | Window size in milliseconds |
+| `store` | in-memory | Custom `RateLimitStore` for persistence |
+
+## Custom Store
+
+For distributed deployments, provide a custom store (e.g. Redis):
+
+```ts
+import type { RateLimitStore } from "@better-conversation/plugin-rate-limit";
+
+const redisStore: RateLimitStore = {
+  async check(key, limit) {
+    const count = parseInt((await redis.get(key)) ?? "0", 10);
+    return count < limit;
+  },
+  async record(key) {
+    const pipe = redis.pipeline();
+    pipe.incr(key);
+    pipe.pexpire(key, 60_000); // match your windowMs
+    await pipe.exec();
+  },
+};
+
+createRateLimitPlugin({ store: redisStore, limit: 30 });
+```
+
+## Policy vs Plugin
+
+The core policy (`maxBlocksPerMinute`, `maxBlocksPerHour`, etc.) is per-role and uses the block adapter. The rate-limit plugin adds a supplementary, configurable limit per chatter per conversation using an injectable store.

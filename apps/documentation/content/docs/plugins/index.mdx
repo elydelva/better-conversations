@@ -6,6 +6,11 @@ description: Extend the engine with blocks, roles, hooks, and custom behavior vi
 ```ts title="ConversationPlugin"
 interface ConversationPlugin {
   name: string;
+  version?: string;
+  createServices?(engine, config): Record<string, unknown>;
+  routes?: Route[];
+  hooks?: Partial<ConversationHooks>;
+  schemaContribution?: SchemaContribution;
   init?(engine: unknown): Promise<void> | void;
 }
 ```
@@ -14,7 +19,7 @@ interface ConversationPlugin {
 
 ```ts title="lib/conversation.ts"
 import { betterConversation } from "@better-conversation/core";
-import { ssePlugin } from "@better-conversation/plugins/sse";
+import { ssePlugin } from "@better-conversation/plugin-sse";
 
 const conv = betterConversation({
   adapter,
@@ -22,14 +27,17 @@ const conv = betterConversation({
 });
 ```
 
-## Built-in Plugins
+## Plugin Packages
 
-| Plugin | Description |
-|--------|-------------|
-| [SSE](/docs/plugins/sse) | Real-time block updates via Server-Sent Events |
-| [Audit](/docs/audit) | Immutable audit log for blocks and conversations |
-| [Blocks](/docs/blocks) | Media, reaction, embed, poll block types |
-| [Roles](/docs/roles) | Moderator, admin, guest, support roles |
+| Plugin | Package | Description |
+|--------|---------|--------------|
+| [SSE](/docs/plugins/sse) | `@better-conversation/plugin-sse` | Real-time block updates via Server-Sent Events |
+| [Presence](/docs/plugins/presence) | `@better-conversation/plugin-presence` | Mark-read, typing status, last-seen |
+| [History](/docs/plugins/history) | `@better-conversation/plugin-history` | Block edit history |
+| [Rate Limit](/docs/plugins/rate-limit) | `@better-conversation/plugin-rate-limit` | Blocks per chatter per conversation |
+| [Audit](/docs/audit) | `@better-conversation/core` (built-in) | Immutable audit log via `config.audit` |
+| [Blocks](/docs/blocks) | `@better-conversation/blocks` | Media, reaction, embed, poll block types |
+| [Roles](/docs/roles) | `@better-conversation/roles` | Moderator, admin, guest, support roles |
 
 ## Custom Plugins
 

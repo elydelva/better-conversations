@@ -3,23 +3,18 @@ title: Audit
 description: Immutable audit log for blocks and conversations — compliance, debugging, analytics.
 ---
 
-## Installation
-
-```npm
-bun add @better-conversation/plugins
-```
-
 ## Setup
 
-```ts title="lib/conversation.ts"
-import { betterConversation } from "@better-conversation/core";
-import { createAuditPlugin } from "@better-conversation/plugins/audit";
+Audit is built into the core. Enable it via `config.audit`:
 
-const audit = createAuditPlugin();
+```ts title="lib/conversation.ts"
+import { betterConversation, createInMemoryAuditStore } from "@better-conversation/core";
 
 const conv = betterConversation({
   adapter,
-  hooks: audit.hooks,
+  audit: {
+    store: createInMemoryAuditStore(),
+  },
 });
 ```
 
@@ -32,43 +27,58 @@ const conv = betterConversation({
 
 ## Custom Store
 
-By default, the plugin uses an in-memory store. Provide a custom store for persistence:
+Provide a custom store for persistence:
 
 ```ts title="lib/audit.ts"
-const audit = createAuditPlugin({
-  store: {
-    async append(entry) {
-      await db.auditLog.create({
-        data: {
-          event: entry.event,
-          entityType: entry.entityType,
-          entityId: entry.entityId,
-          payload: entry.payload,
-        },
-      });
-    },
-    async query(filters) {
-      return db.auditLog.findMany({
-        where: {
-          ...(filters.event && { event: filters.event }),
-          ...(filters.entityType && { entityType: filters.entityType }),
-          ...(filters.entityId && { entityId: filters.entityId }),
-          ...(filters.since && { createdAt: { gte: filters.since } }),
-        },
-        take: filters.limit ?? 100,
-      });
-    },
+import type { AuditStore } from "@better-conversation/core";
+
+const customStore: AuditStore = {
+  async append(entry) {
+    await db.auditLog.create({
+      data: {
+        event: entry.event,
+        entityType: entry.entityType,
+        entityId: entry.entityId,
+        payload: entry.payload,
+      },
+    });
   },
+  async query(filters) {
+    return db.auditLog.findMany({
+      where: {
+        ...(filters.event && { event: filters.event }),
+        ...(filters.entityType && { entityType: filters.entityType }),
+        ...(filters.entityId && { entityId: filters.entityId }),
+        ...(filters.since && { createdAt: { gte: filters.since } }),
+      },
+      take: filters.limit ?? 100,
+    });
+  },
+};
+
+betterConversation({
+  adapter,
+  audit: { store: customStore },
 });
 ```
 
 ## Querying
 
+`createInMemoryAuditStore()` returns a store with an `entries` array and optional `query` method:
+
 ```ts title="query.ts"
-const entries = await audit.store.query?.({
+import { createInMemoryAuditStore } from "@better-conversation/core";
+
+const store = createInMemoryAuditStore();
+const conv = betterConversation({ adapter, audit: { store } });
+
+// Access entries directly (in-memory store)
+const entries = store.entries;
+
+// Or use query when available
+const recent = await store.query?.({
   event: "block:created",
-  entityType: "conversation",
-  entityId: conversationId,
+  entityType: "block",
   since: new Date(Date.now() - 24 * 60 * 60 * 1000),
   limit: 100,
 });

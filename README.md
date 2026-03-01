@@ -19,7 +19,7 @@ console.log(version);
 
 | Package | Description |
 |---------|-------------|
-| `@better-conversation/core` | Pure engine, interfaces, pipeline hooks |
+| `@better-conversation/core` | Engine, interfaces, hooks, built-in audit |
 | `@better-conversation/client` | Type-safe browser SDK |
 | `@better-conversation/adapter-drizzle` | PostgreSQL via Drizzle ORM |
 | `@better-conversation/adapter-prisma` | Placeholder |
@@ -29,7 +29,9 @@ console.log(version);
 | `@better-conversation/handler-express` | Placeholder |
 | `@better-conversation/blocks` | media, reaction, embed, poll |
 | `@better-conversation/roles` | moderator, admin, guest, support |
-| `@better-conversation/plugins` | SSE, audit, rate-limit |
+| `@better-conversation/plugin-sse` | Real-time block updates |
+| `@better-conversation/plugin-presence` | Mark-read, typing, last-seen |
+| `@better-conversation/plugin-rate-limit` | Rate limit blocks per chatter |
 
 ## Development
 

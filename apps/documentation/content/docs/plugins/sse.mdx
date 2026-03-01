@@ -1,19 +1,19 @@
 ---
 title: SSE
-description: Real-time block updates via Server-Sent Events — streaming built into the handler.
+description: Real-time block updates via Server-Sent Events — optional plugin package.
 ---
 
 ## Installation
 
-```npm
-bun add @better-conversation/plugins
+```bash
+bun add @better-conversation/plugin-sse
 ```
 
 ## Setup
 
 ```ts title="lib/conversation.ts"
 import { betterConversation } from "@better-conversation/core";
-import { ssePlugin } from "@better-conversation/plugins/sse";
+import { ssePlugin } from "@better-conversation/plugin-sse";
 
 const conv = betterConversation({
   adapter,
@@ -23,13 +23,13 @@ const conv = betterConversation({
 
 ## Endpoint
 
-The core routes include:
+The plugin registers:
 
 ```
 GET /conversations/:id/stream
 ```
 
-This streams `block:created` events (and optionally other events) as new blocks are added to the conversation.
+This streams `block:created` events (and heartbeats) as new blocks are added to the conversation. The implementation is polling-based.
 
 ## Client Usage
 
@@ -41,7 +41,7 @@ const client = createConversationClient({ baseUrl: "/api/conversation" });
 const es = client.stream(conversationId);
 
 es.addEventListener("block:created", (e) => {
-  const block = JSON.parse(e.data);
+  const { block } = JSON.parse(e.data);
   console.log("New block:", block);
 });
 

@@ -329,8 +329,18 @@
         "next": ">=14.0.0",
       },
     },
-    "packages/plugin-sse": {
-      "name": "@better-conversation/plugin-sse",
+    "packages/plugin-history": {
+      "name": "@better-conversation/plugin-history",
+      "version": "1.0.0",
+      "dependencies": {
+        "@better-conversation/core": "workspace:*",
+      },
+      "devDependencies": {
+        "typescript": "catalog:",
+      },
+    },
+    "packages/plugin-presence": {
+      "name": "@better-conversation/plugin-presence",
       "version": "1.0.0",
       "dependencies": {
         "@better-conversation/core": "workspace:*",
@@ -340,12 +350,23 @@
         "typescript": "catalog:",
       },
     },
-    "packages/plugins": {
-      "name": "@better-conversation/plugins",
+    "packages/plugin-rate-limit": {
+      "name": "@better-conversation/plugin-rate-limit",
       "version": "1.0.0",
       "dependencies": {
         "@better-conversation/core": "workspace:*",
-        "@better-conversation/plugin-sse": "workspace:*",
+        "@better-conversation/errors": "workspace:*",
+      },
+      "devDependencies": {
+        "typescript": "catalog:",
+      },
+    },
+    "packages/plugin-sse": {
+      "name": "@better-conversation/plugin-sse",
+      "version": "1.0.0",
+      "dependencies": {
+        "@better-conversation/core": "workspace:*",
+        "@better-conversation/errors": "workspace:*",
       },
       "devDependencies": {
         "typescript": "catalog:",
@@ -415,9 +436,13 @@
 
     "@better-conversation/handler-next": ["@better-conversation/handler-next@workspace:packages/handler-next"],
 
-    "@better-conversation/plugin-sse": ["@better-conversation/plugin-sse@workspace:packages/plugin-sse"],
+    "@better-conversation/plugin-history": ["@better-conversation/plugin-history@workspace:packages/plugin-history"],
 
-    "@better-conversation/plugins": ["@better-conversation/plugins@workspace:packages/plugins"],
+    "@better-conversation/plugin-presence": ["@better-conversation/plugin-presence@workspace:packages/plugin-presence"],
+
+    "@better-conversation/plugin-rate-limit": ["@better-conversation/plugin-rate-limit@workspace:packages/plugin-rate-limit"],
+
+    "@better-conversation/plugin-sse": ["@better-conversation/plugin-sse@workspace:packages/plugin-sse"],
 
     "@better-conversation/roles": ["@better-conversation/roles@workspace:packages/roles"],
 

@@ -34,9 +34,12 @@ packages/
 ├── handler-next/      # @better-conversation/handler-next — Next.js
 ├── handler-hono/      # @better-conversation/handler-hono — Hono
 ├── handler-express/   # @better-conversation/handler-express — Express
-├── blocks/         # @better-conversation/blocks — media, reaction, embed, poll
-├── roles/          # @better-conversation/roles — moderator, admin, guest, support
-└── plugins/        # @better-conversation/plugins — sse, audit, rate-limit
+├── blocks/           # @better-conversation/blocks — media, reaction, embed, poll
+├── roles/            # @better-conversation/roles — moderator, admin, guest, support
+├── plugin-sse/       # @better-conversation/plugin-sse — real-time block updates
+├── plugin-presence/  # @better-conversation/plugin-presence — mark-read, typing
+├── plugin-rate-limit/# @better-conversation/plugin-rate-limit — rate limiting
+└── plugin-history/   # @better-conversation/plugin-history — block edit history
 ```
 
 **Package convention**: One package per adapter and per handler for dependency independence. Example:
