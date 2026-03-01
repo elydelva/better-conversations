@@ -79,4 +79,21 @@ describe("drizzleAdapter", () => {
     expect(result.items.length).toBe(0);
     expect(result.hasMore).toBe(false);
   });
+
+  test("uses buildSchema + translate when plugins provided (PG)", () => {
+    const db = createMockDb();
+    const presencePlugin = {
+      schemaContribution: {
+        extensions: [
+          {
+            extendTable: "participants",
+            columns: { lastReadAt: { type: "timestamp" as const, nullable: true } },
+          },
+        ],
+      },
+    };
+    const adapter = drizzleAdapter(db, { provider: "pg", plugins: [presencePlugin] });
+    expect(adapter).toBeDefined();
+    expect(adapter.participants).toBeDefined();
+  });
 });

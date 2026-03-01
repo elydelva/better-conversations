@@ -1,5 +1,7 @@
 import { createAdapterHelpers } from "@better-conversation/core";
 import type { DatabaseAdapter } from "@better-conversation/core";
+import { buildSchema } from "@better-conversation/core/schema";
+import type { SchemaContributor } from "@better-conversation/core/schema";
 import { createBlocksAdapter } from "./blocks";
 import { createChattersAdapter } from "./chatters";
 import { createConversationsAdapter } from "./conversations";
@@ -9,12 +11,15 @@ import { createPoliciesAdapter } from "./policies";
 import { createRegistriesAdapter } from "./registries";
 import { createSchema } from "./schema";
 import { createSchemaSqlite } from "./schema.sqlite";
+import { translateToDrizzle } from "./schema/translate";
 import type { DrizzleAdapterContext } from "./shared";
 
 export interface DrizzleAdapterOptions {
   provider?: "pg" | "sqlite" | "mysql";
   tablePrefix?: string;
   generateId?: () => string;
+  /** When provided, uses buildSchema + translateToDrizzle instead of createSchema (PG only) */
+  plugins?: SchemaContributor[];
 }
 
 export function drizzleAdapter(
@@ -27,7 +32,14 @@ export function drizzleAdapter(
     tablePrefix: prefix,
     generateId: options?.generateId,
   });
-  const schema = provider === "sqlite" ? createSchemaSqlite(prefix) : createSchema(prefix);
+
+  let schema: DrizzleAdapterContext["schema"];
+  if (provider === "pg" && options?.plugins && options.plugins.length > 0) {
+    const merged = buildSchema(options.plugins, { tablePrefix: prefix });
+    schema = translateToDrizzle(merged, { tablePrefix: prefix });
+  } else {
+    schema = provider === "sqlite" ? createSchemaSqlite(prefix) : createSchema(prefix);
+  }
 
   const ctx: DrizzleAdapterContext = { db, schema, helpers };
 
