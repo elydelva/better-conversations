@@ -29,7 +29,7 @@ export function createHistoryPlugin(
 
     schemaContribution: historySchemaContribution,
 
-    createServices: (_engine: ConversationEngine, config: unknown) => {
+    createServices: (_engine: unknown, config: unknown) => {
       const adapter = (config as ConversationConfig).adapter;
       const historyAdapter = adapter?.extensions?.history as BlockHistoryAdapter | undefined;
       if (!historyAdapter) {

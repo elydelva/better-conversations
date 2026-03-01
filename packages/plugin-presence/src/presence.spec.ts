@@ -26,7 +26,16 @@ describe("plugin-presence", () => {
           leftAt: null,
           metadata: null,
         }),
-        update: async () => ({}),
+        update: async () => ({
+          id: "p1",
+          conversationId: "c1",
+          chatterId: "ch1",
+          role: "member",
+          joinedAt: new Date(),
+          leftAt: null,
+          lastReadAt: new Date(),
+          metadata: null,
+        }),
       },
     });
     const engine = betterConversation({ adapter, plugins: [createPresencePlugin()] });

@@ -226,7 +226,7 @@ describe("createFastifyHandler", () => {
 
     test("PATCH /policies/global updates global policy", async () => {
       const app = Fastify();
-      await app.register(createFastifyHandler(engine), {
+      await app.register(createFastifyHandler(engine, { getCurrentChatter: () => "id" }), {
         prefix: "/api",
       });
       const res = await app.inject({

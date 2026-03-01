@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useActiveChatter } from "@/contexts/chatter-context";
+import type { Conversation } from "@better-conversation/core";
 import { useConversations } from "@better-conversation/react";
 import { MessageCircle } from "lucide-react";
 import Link from "next/link";
@@ -10,7 +11,9 @@ import Link from "next/link";
 export default function ChatPage() {
   const { activeChatter } = useActiveChatter();
   const { data: conversationsData, isLoading: loading } = useConversations({ limit: 50 });
-  const conversations = (conversationsData?.items ?? []).filter((c) => c.status !== "archived");
+  const conversations = (conversationsData?.items ?? []).filter(
+    (c: Conversation) => c.status !== "archived"
+  );
 
   return (
     <div className="flex flex-1 flex-col gap-6 p-6">
@@ -43,7 +46,7 @@ export default function ChatPage() {
             </p>
           ) : (
             <div className="space-y-2">
-              {conversations.map((c) => (
+              {conversations.map((c: Conversation) => (
                 <Button key={c.id} asChild variant="outline" className="w-full justify-start">
                   <Link href={`/chat/${c.id}`}>
                     <MessageCircle className="mr-2 h-4 w-4" />

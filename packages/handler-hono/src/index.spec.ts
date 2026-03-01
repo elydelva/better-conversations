@@ -239,7 +239,9 @@ describe("createHonoHandler", () => {
     });
 
     test("PATCH /policies/global updates global policy", async () => {
-      const handler = createHonoHandler(engine);
+      const handler = createHonoHandler(engine, {
+        getCurrentChatter: () => "id",
+      });
       const { c } = createMockContext({
         method: "PATCH",
         path: "/policies/global",

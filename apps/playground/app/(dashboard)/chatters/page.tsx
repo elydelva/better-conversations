@@ -157,7 +157,7 @@ export default function ChattersPage() {
             </p>
           ) : (
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {chatters.map((c) => (
+              {chatters.map((c: Chatter) => (
                 <Card key={c.id} className="relative">
                   <CardContent className="flex items-center gap-4 pt-6">
                     <Avatar>

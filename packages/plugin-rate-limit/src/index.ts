@@ -36,7 +36,7 @@ export function createRateLimitPlugin(options: RateLimitPluginOptions = {}): Con
     name: "rate-limit",
     version: "1.0.0",
 
-    createServices: (_engine: ConversationEngine) => {
+    createServices: (engine: unknown) => {
       const service = new RateLimitService({ store, limit, windowMs });
       return { rateLimit: service };
     },
@@ -45,7 +45,7 @@ export function createRateLimitPlugin(options: RateLimitPluginOptions = {}): Con
       onBlockBeforeSend: async (ctx: BlockBeforeSendCtx, outcomes) => {
         const engine = ctx.engine as ConversationEngine | undefined;
         if (!engine) return outcomes.next();
-        const svc = engine.getPlugin<RateLimitService>("rateLimit");
+        const svc = (engine as ConversationEngine).getPlugin<RateLimitService>("rateLimit");
         if (!svc) return outcomes.next();
         await svc.checkAndRecord(ctx.author.id, ctx.block.conversationId);
         return outcomes.next();

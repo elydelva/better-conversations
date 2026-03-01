@@ -212,7 +212,9 @@ describe("createNextHandler", () => {
     });
 
     test("PATCH /policies/global updates global policy", async () => {
-      const handler = createNextHandler(engine);
+      const handler = createNextHandler(engine, {
+        getCurrentChatter: () => "id",
+      });
       const req = await createRequest("http://localhost/policies/global", {
         method: "PATCH",
         body: JSON.stringify({ maxBlocksPerMinute: 30 }),

@@ -3,6 +3,7 @@
  * Used when buildSchema is invoked with plugins.
  */
 import type { ColumnDef, MergedSchema } from "@better-conversation/core/schema";
+import type { PgColumn, PgColumnBuilderBase } from "drizzle-orm/pg-core";
 import {
   boolean,
   integer,
@@ -120,11 +121,9 @@ export function translateToDrizzle(
     const def = merged.tables[prefixedName];
     if (!def) continue;
 
-    const columns: Record<string, ReturnType<typeof varchar>> = {};
+    const columns: Record<string, PgColumnBuilderBase> = {};
     for (const [key, colDef] of Object.entries(def.columns)) {
-      columns[key] = columnDefToDrizzle(key, colDef, prefix, logicalName) as ReturnType<
-        typeof varchar
-      >;
+      columns[key] = columnDefToDrizzle(key, colDef, prefix, logicalName) as PgColumnBuilderBase;
     }
 
     const tableName = prefix ? `${prefix}${logicalName}` : logicalName;
@@ -133,13 +132,13 @@ export function translateToDrizzle(
     const uniqueConstraints = def.uniqueConstraints;
     if (uniqueConstraints && uniqueConstraints.length > 0) {
       table = pgTable(tableName, columns, (t) => {
-        const out: unknown[] = [];
+        const out: ReturnType<ReturnType<typeof unique>["on"]>[] = [];
         for (const uc of uniqueConstraints ?? []) {
           const refs = uc.columns
-            .map((c) => (t as Record<string, unknown>)[c])
-            .filter((x) => x != null);
+            .map((colName) => (t as Record<string, PgColumn>)[colName])
+            .filter((x): x is PgColumn => x != null);
           if (refs.length > 0) {
-            out.push(unique().on(...(refs as [unknown, ...unknown[]])));
+            out.push(unique().on(refs[0], ...refs.slice(1)));
           }
         }
         return out;

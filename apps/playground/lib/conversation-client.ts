@@ -5,7 +5,7 @@ import { getAuthChatterId } from "./auth-header";
 
 export const convClient = createBetterConversationsClient({
   baseURL: "/api/conversation",
-  getHeaders: () => {
+  getHeaders: (): Record<string, string> => {
     const id = getAuthChatterId();
     return id ? { "X-Chatter-Id": id } : {};
   },

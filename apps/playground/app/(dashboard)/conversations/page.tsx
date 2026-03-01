@@ -160,7 +160,7 @@ export default function ConversationsPage() {
             </p>
           ) : (
             <div className="space-y-2">
-              {conversations.map((c) => (
+              {conversations.map((c: Conversation) => (
                 <div
                   key={c.id}
                   className="flex items-center justify-between rounded-lg border p-4 hover:bg-muted/50"

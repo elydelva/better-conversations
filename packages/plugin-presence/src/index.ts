@@ -28,8 +28,8 @@ export function createPresencePlugin(
 
     schemaContribution: presenceSchemaContribution,
 
-    createServices: (engine: ConversationEngine, _config: unknown) => ({
-      presence: new PresenceService(engine),
+    createServices: (engine: unknown, _config: unknown) => ({
+      presence: new PresenceService(engine as ConversationEngine),
     }),
 
     routes: [
