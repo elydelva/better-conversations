@@ -1,10 +1,11 @@
 import { describe, expect, test } from "bun:test";
 import { betterConversation, dispatch } from "@better-conversation/core";
 import { createMockAdapter } from "@better-conversation/core/fixtures";
-import { ssePlugin } from "./index.js";
+import { createSsePlugin } from "./index.js";
 
 describe("plugin-sse", () => {
-  test("ssePlugin exposes name and routes", () => {
+  test("createSsePlugin returns plugin with name and routes", () => {
+    const ssePlugin = createSsePlugin();
     expect(ssePlugin.name).toBe("sse");
     expect(ssePlugin.routes).toBeDefined();
     expect(ssePlugin.routes?.length).toBe(1);
@@ -31,7 +32,7 @@ describe("plugin-sse", () => {
         }),
       },
     });
-    const engine = betterConversation({ adapter, plugins: [ssePlugin] });
+    const engine = betterConversation({ adapter, plugins: [createSsePlugin()] });
     const req = {
       method: "GET",
       path: "/conversations/conv-1/stream",
@@ -52,7 +53,7 @@ describe("plugin-sse", () => {
         find: async () => null,
       },
     });
-    const engine = betterConversation({ adapter, plugins: [ssePlugin] });
+    const engine = betterConversation({ adapter, plugins: [createSsePlugin()] });
     const req = {
       method: "GET",
       path: "/conversations/nonexistent/stream",

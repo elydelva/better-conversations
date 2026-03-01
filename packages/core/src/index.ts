@@ -20,7 +20,7 @@ export type {
   BlockFilters,
   BlockStatus,
   ConversationStatus,
-} from "./types/index.js";
+} from "@better-conversation/types";
 
 export {
   createAdapterHelpers,

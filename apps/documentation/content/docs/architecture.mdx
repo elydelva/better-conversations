@@ -6,14 +6,28 @@ description: Interface-first — core has no framework/ORM knowledge; adapters a
 ## Package Layers
 
 ```
+types/         → Shared domain types (Chatter, Conversation, Block, PolicyObject, etc.). Used by core, client, adapters.
 core/          → Pure engine. Interfaces. Hook pipeline. Permission logic. Zero external imports.
 adapters/      → Concrete implementations of core interfaces. Drizzle, Prisma, MongoDB.
 handlers/      → Optional HTTP bridges. Next.js, Hono, Express. Take a ConversationEngine, expose routes.
 blocks/        → Block plugins (media, reaction, embed, poll). Each enriches the core type registry.
 roles/         → Role plugins (moderator, admin). Each carries a policy and registers in DB.
-client/        → Type-safe browser SDK. Fetches handler endpoints. Infers block/role types.
-plugins/       → Extensions: SSE, presence, history, audit log, rate limiting.
+client/        → Type-safe browser SDK. createBetterConversationsClient with plugins (sseClient, historyClient).
+plugins/       → Extensions: SSE, presence, history, audit log, rate limiting. Plugins can export client-side plugins too.
+cli/           → Schema generation and migrations. bc generate, bc migrate.
 ```
+
+## Types Package
+
+`@better-conversation/types` provides shared domain types used across the ecosystem:
+
+- `Chatter`, `ChatterInput`
+- `Conversation`, `ConversationInput`, `ConversationFilters`
+- `Participant`, `ParticipantInput`
+- `Block`, `BlockInput`, `BlockFilters`, `BlockStatus`, `ConversationStatus`
+- `Paginated`, `PolicyObject`, `ResolvedPolicy`
+
+Import from `@better-conversation/types` or `@better-conversation/core` (re-exports). Plugin-specific types (e.g. `PresenceInfo`, `BlockHistoryEntry`) are exported from their respective packages.
 
 ## Extensibility
 

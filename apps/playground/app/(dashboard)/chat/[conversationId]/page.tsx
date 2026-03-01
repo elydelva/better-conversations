@@ -5,85 +5,58 @@ import { ParticipantList } from "@/components/participant-list";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useActiveChatter } from "@/contexts/chatter-context";
+import { convClient } from "@/lib/conversation-client";
+import type { Block, Chatter, Participant } from "@better-conversation/core";
 import {
-  type Block,
-  type Chatter,
-  type Conversation,
-  type Participant,
-  blocksApi,
-  chattersApi,
-  conversationsApi,
-  participantsApi,
-  playgroundApi,
-} from "@/lib/api";
+  useBlocks,
+  useChatters,
+  useConversation,
+  useParticipants,
+} from "@better-conversation/react";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useMemo } from "react";
 
 export default function ChatConversationPage() {
   const params = useParams();
-  const conversationId = params.conversationId as string;
+  const conversationId = (params.conversationId as string) ?? null;
   const { activeChatter } = useActiveChatter();
 
-  const [conversation, setConversation] = useState<Conversation | null>(null);
-  const [blocks, setBlocks] = useState<Block[]>([]);
-  const [participants, setParticipants] = useState<Participant[]>([]);
-  const [chatters, setChatters] = useState<Record<string, Chatter>>({});
-  const [allChatters, setAllChatters] = useState<Chatter[]>([]);
-  const [loading, setLoading] = useState(true);
+  const {
+    data: conversation,
+    isLoading: convLoading,
+    refetch: refetchConv,
+  } = useConversation(conversationId);
+  const { data: blocksData, refetch: refetchBlocks } = useBlocks(conversationId, { limit: 50 });
+  const { data: participants = [], refetch: refetchParticipants } = useParticipants(conversationId);
+  const { data: allChattersData } = useChatters({ limit: 100 });
 
-  const loadData = useCallback(() => {
-    if (!conversationId) return;
-    setLoading(true);
-    Promise.all([
-      conversationsApi.find(conversationId),
-      blocksApi.list(conversationId, { limit: 50 }),
-      participantsApi.list(conversationId),
-    ])
-      .then(([conv, blocksRes, parts]) => {
-        setConversation(conv);
-        setBlocks(blocksRes.items);
-        setParticipants(parts);
-        const ids = new Set<string>();
-        for (const p of parts) ids.add(p.chatterId);
-        for (const b of blocksRes.items) ids.add(b.authorId);
-        return Array.from(ids);
-      })
-      .then((ids) => {
-        return Promise.all(
-          ids.map((id) =>
-            chattersApi
-              .find(id)
-              .then((c) => ({ id, c }))
-              .catch(() => null)
-          )
-        ).then((results) => {
-          const map: Record<string, Chatter> = {};
-          for (const r of results) {
-            if (r) map[r.id] = r.c;
-          }
-          setChatters(map);
-        });
-      })
-      .catch(() => {
-        setConversation(null);
-        setBlocks([]);
-        setParticipants([]);
-      })
-      .finally(() => setLoading(false));
-  }, [conversationId]);
+  const blocks = blocksData?.items ?? [];
+  const allChatters = allChattersData?.items ?? [];
 
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
+  const chatterIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const p of participants) ids.add(p.chatterId);
+    for (const b of blocks) ids.add(b.authorId);
+    return Array.from(ids);
+  }, [participants, blocks]);
 
-  useEffect(() => {
-    playgroundApi
-      .listChatters()
-      .then(setAllChatters)
-      .catch(() => setAllChatters([]));
-  }, []);
+  const chatters = useMemo(() => {
+    const map: Record<string, Chatter> = {};
+    for (const c of allChatters) {
+      if (chatterIds.includes(c.id)) map[c.id] = c;
+    }
+    return map;
+  }, [allChatters, chatterIds]);
+
+  const refetch = () => {
+    refetchConv();
+    refetchBlocks();
+    refetchParticipants();
+  };
+
+  const loading = convLoading;
 
   if (loading || !conversation) {
     return (
@@ -122,13 +95,13 @@ export default function ChatConversationPage() {
           </CardHeader>
           <CardContent>
             <BlockList
-              conversationId={conversationId}
+              conversationId={conversationId ?? ""}
               blocks={blocks}
               chatters={chatters}
               activeChatterId={activeChatter?.id ?? null}
-              onBlockSent={loadData}
-              onBlockDeleted={loadData}
-              onBlockUpdated={loadData}
+              onBlockSent={refetch}
+              onBlockDeleted={refetch}
+              onBlockUpdated={refetch}
             />
           </CardContent>
         </Card>
@@ -139,7 +112,7 @@ export default function ChatConversationPage() {
             chatters={chatters}
             allChatters={allChatters}
             activeChatterId={activeChatter?.id ?? null}
-            onParticipantsChange={loadData}
+            onParticipantsChange={refetch}
           />
         </div>
       </div>

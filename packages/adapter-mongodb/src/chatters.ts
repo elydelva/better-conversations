@@ -12,6 +12,9 @@ export function createChattersAdapter(_ctx: MongoAdapterContext): ChatterAdapter
     async findByEntity() {
       throw new Error(NOT_IMPL);
     },
+    async list() {
+      throw new Error(NOT_IMPL);
+    },
     async create() {
       throw new Error(NOT_IMPL);
     },

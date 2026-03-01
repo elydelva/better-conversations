@@ -21,3 +21,5 @@ export interface PolicyObject {
   maxThreadDepth?: number;
   maxThreadReplies?: number;
 }
+
+export type ResolvedPolicy = PolicyObject;

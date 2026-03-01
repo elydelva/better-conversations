@@ -5,6 +5,13 @@ type Prisma = PrismaAdapterContext["prisma"] & {
   bcChatter: {
     findUnique: (args: { where: { id: string } }) => Promise<Row | null>;
     findFirst: (args: { where: Record<string, unknown> }) => Promise<Row | null>;
+    findMany: (args: {
+      orderBy?: { createdAt: "asc" | "desc" };
+      take?: number;
+      skip?: number;
+      cursor?: { createdAt: Date };
+      where?: { createdAt?: { lt: Date } };
+    }) => Promise<Row[]>;
     create: (args: { data: Record<string, unknown> }) => Promise<Row>;
     update: (args: { where: { id: string }; data: Record<string, unknown> }) => Promise<Row>;
   };
@@ -50,6 +57,29 @@ export function createChattersAdapter(ctx: PrismaAdapterContext): ChatterAdapter
         where: { entityType: type, entityId },
       });
       return row ? toChatter(row) : null;
+    },
+    async list(params) {
+      const limit = Math.min(Math.max(params?.limit ?? 50, 1), 100);
+      const cursor = params?.cursor ? new Date(params.cursor) : null;
+      const rows = cursor
+        ? await p.findMany({
+            where: { createdAt: { lt: cursor } },
+            orderBy: { createdAt: "desc" },
+            take: limit + 1,
+          })
+        : await p.findMany({
+            orderBy: { createdAt: "desc" },
+            take: limit + 1,
+          });
+      const hasMore = rows.length > limit;
+      const items = rows.slice(0, limit).map((r) => toChatter(r));
+      const last = items[items.length - 1];
+      return {
+        items,
+        total: items.length,
+        cursor: hasMore && last ? last.createdAt.toISOString() : null,
+        hasMore,
+      };
     },
     async create(data: ChatterInput) {
       const id = helpers.generateId();

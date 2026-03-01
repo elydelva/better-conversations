@@ -9,6 +9,7 @@ export function createMockAdapter(overrides: Partial<DatabaseAdapter> = {}): Dat
     chatters: {
       find: async () => null,
       findByEntity: async () => null,
+      list: async () => ({ items: [], total: 0, cursor: null, hasMore: false }),
       create: async () => createMockChatter(),
       update: async () => createMockChatter(),
     },

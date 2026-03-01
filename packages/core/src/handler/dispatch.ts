@@ -8,6 +8,9 @@ export async function dispatch(
   req: CoreRequest,
   basePath = ""
 ): Promise<CoreResponse> {
+  if (typeof engine.init === "function") {
+    await engine.init();
+  }
   const path = basePath
     ? req.path.startsWith(basePath)
       ? req.path.slice(basePath.length) || "/"

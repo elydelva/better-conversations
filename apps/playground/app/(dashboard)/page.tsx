@@ -3,30 +3,16 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useActiveChatter } from "@/contexts/chatter-context";
-import { conversationsApi, playgroundApi } from "@/lib/api";
+import { useChatters, useConversations } from "@better-conversation/react";
 import { MessageCircle, MessageSquare, Users } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
 
 export default function OverviewPage() {
   const { activeChatter } = useActiveChatter();
-  const [chatterCount, setChatterCount] = useState<number | null>(null);
-  const [conversationCount, setConversationCount] = useState<number | null>(null);
-
-  useEffect(() => {
-    Promise.all([
-      playgroundApi.listChatters().then((r) => r.length),
-      conversationsApi.list({ limit: 100 }).then((r) => r.items.length),
-    ])
-      .then(([c, conv]) => {
-        setChatterCount(c);
-        setConversationCount(conv);
-      })
-      .catch(() => {
-        setChatterCount(0);
-        setConversationCount(0);
-      });
-  }, []);
+  const { data: chattersData } = useChatters({ limit: 100 });
+  const { data: conversationsData } = useConversations({ limit: 100 });
+  const chatterCount = chattersData?.items?.length ?? null;
+  const conversationCount = conversationsData?.items?.length ?? null;
 
   return (
     <div className="flex flex-1 flex-col gap-6 p-6">

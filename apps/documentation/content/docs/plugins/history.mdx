@@ -16,17 +16,17 @@ History adds a `block_history` table and requires the Drizzle adapter with `plug
 ```ts title="lib/conversation.ts"
 import { betterConversation } from "@better-conversation/core";
 import { drizzleAdapter } from "@better-conversation/adapter-drizzle";
-import { historyPlugin } from "@better-conversation/plugin-history";
+import { createHistoryPlugin } from "@better-conversation/plugin-history";
 import { db } from "./db";
 
 const adapter = drizzleAdapter(db, {
   provider: "pg",
-  plugins: [historyPlugin],
+  plugins: [createHistoryPlugin()],
 });
 
 const conv = betterConversation({
   adapter,
-  plugins: [historyPlugin],
+  plugins: [createHistoryPlugin()],
 });
 ```
 
@@ -41,6 +41,23 @@ const conv = betterConversation({
 ```ts
 const history = conv.getPlugin<HistoryService>("history");
 const entries = await history.list(blockId);
+```
+
+## Client Usage
+
+With the [History client plugin](/docs/client#historyclient), you can fetch block history from the browser:
+
+```ts title="lib/conversation-client.ts"
+import { createBetterConversationsClient } from "@better-conversation/client";
+import { historyClient } from "@better-conversation/plugin-history/client";
+
+const client = createBetterConversationsClient({
+  baseURL: "/api/conversation",
+  plugins: [historyClient()],
+});
+
+const entries = await client.blocks.history(conversationId, blockId);
+// BlockHistoryEntry[]
 ```
 
 ## Hooks

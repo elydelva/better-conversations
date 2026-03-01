@@ -143,11 +143,11 @@ When using the Drizzle adapter with `plugins`, the merged schema is translated t
 
 ```ts title="Example: drizzleAdapter with plugins"
 import { drizzleAdapter } from "@better-conversation/adapter-drizzle";
-import { presencePlugin } from "@better-conversation/plugin-presence";
-import { historyPlugin } from "@better-conversation/plugin-history";
+import { createPresencePlugin } from "@better-conversation/plugin-presence";
+import { createHistoryPlugin } from "@better-conversation/plugin-history";
 
 const adapter = drizzleAdapter(db, {
   provider: "pg",
-  plugins: [presencePlugin, historyPlugin],
+  plugins: [createPresencePlugin(), createHistoryPlugin()],
 });
 ```

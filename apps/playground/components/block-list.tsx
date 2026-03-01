@@ -10,7 +10,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { type Block, type Chatter, blocksApi } from "@/lib/api";
+import type { Block, Chatter } from "@better-conversation/core";
+import { useConversationClient } from "@better-conversation/react";
 import { MoreHorizontal, Pencil, Reply, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -34,6 +35,7 @@ export function BlockList({
   onBlockDeleted,
   onBlockUpdated,
 }: BlockListProps) {
+  const client = useConversationClient();
   const [newBody, setNewBody] = useState("");
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -45,7 +47,7 @@ export function BlockList({
     if (!activeChatterId || !newBody.trim()) return;
     setSending(true);
     try {
-      await blocksApi.send(conversationId, {
+      await client.blocks.send(conversationId, {
         authorId: activeChatterId,
         type: "text",
         body: newBody.trim(),
@@ -65,7 +67,7 @@ export function BlockList({
   async function handleEdit(block: Block) {
     if (!editBody.trim()) return;
     try {
-      await blocksApi.update(conversationId, block.id, { body: editBody.trim() });
+      await client.blocks.update(conversationId, block.id, { body: editBody.trim() });
       setEditingId(null);
       setEditBody("");
       onBlockUpdated();
@@ -77,7 +79,7 @@ export function BlockList({
 
   async function handleDelete(block: Block) {
     try {
-      await blocksApi.delete(conversationId, block.id);
+      await client.blocks.delete(conversationId, block.id);
       onBlockDeleted();
       toast.success("Message deleted");
     } catch (err) {

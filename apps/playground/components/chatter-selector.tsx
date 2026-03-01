@@ -11,7 +11,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useActiveChatter } from "@/contexts/chatter-context";
-import { type Chatter, chattersApi } from "@/lib/api";
+import { convClient } from "@/lib/conversation-client";
+import type { Chatter } from "@better-conversation/core";
 import { ChevronDown, User } from "lucide-react";
 import Link from "next/link";
 
@@ -25,7 +26,7 @@ export function ChatterSelector({ chatters, onRefresh }: ChatterSelectorProps) {
 
   async function handleSelect(chatter: Chatter) {
     try {
-      const full = await chattersApi.find(chatter.id);
+      const full = await convClient.chatters.find(chatter.id);
       setActiveChatter(full);
     } catch {
       setActiveChatter(chatter);

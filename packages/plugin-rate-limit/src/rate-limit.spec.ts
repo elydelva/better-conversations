@@ -38,6 +38,7 @@ describe("plugin-rate-limit", () => {
       chatters: {
         find: async () => chatter,
         findByEntity: async () => null,
+        list: async () => ({ items: [chatter], total: 1, cursor: null, hasMore: false }),
         create: async () => chatter,
         update: async () => chatter,
       },

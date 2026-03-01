@@ -1,6 +1,6 @@
 "use client";
 
-import type { Chatter } from "@/lib/api";
+import type { Chatter } from "@better-conversation/core";
 import type React from "react";
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 

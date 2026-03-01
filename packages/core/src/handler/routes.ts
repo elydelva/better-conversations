@@ -7,6 +7,7 @@ import {
   handleChatterConversations,
   handleChattersCreate,
   handleChattersFind,
+  handleChattersList,
   handleChattersUpdate,
   handleConversationsArchive,
   handleConversationsCreate,
@@ -40,6 +41,7 @@ export interface Route {
 
 /** Core routes (without stream, markRead — provided by plugins) */
 const coreRoutes: Route[] = [
+  { method: "GET", path: "/chatters", handler: handleChattersList },
   { method: "POST", path: "/chatters", handler: handleChattersCreate },
   {
     method: "GET",

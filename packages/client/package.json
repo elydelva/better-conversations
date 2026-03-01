@@ -9,18 +9,16 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "default": "./dist/index.js"
-    },
-    "./react": {
-      "types": "./dist/react.d.ts",
-      "import": "./dist/react.js",
-      "default": "./dist/react.js"
     }
   },
   "scripts": {
     "build": "tsc"
   },
   "dependencies": {
-    "@better-conversation/core": "workspace:*"
+    "@better-conversation/core": "workspace:*",
+    "@better-fetch/fetch": "^1.1.21",
+    "zod": "^4.3.6",
+    "@better-conversation/types": "workspace:*"
   },
   "peerDependencies": {
     "react": ">=18.0.0"
@@ -30,5 +28,7 @@
     "react": "^18.0.0",
     "typescript": "catalog:"
   },
-  "files": ["dist"]
+  "files": [
+    "dist"
+  ]
 }

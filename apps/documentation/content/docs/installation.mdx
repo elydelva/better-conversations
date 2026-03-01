@@ -89,6 +89,17 @@ Tables created: `bc_chatters`, `bc_conversations`, `bc_participants`, `bc_blocks
 
 See [Database schema](/docs/schema) for full details.
 
+## CLI (Schema Generation)
+
+Use the CLI to generate Drizzle or Prisma schemas from your config:
+
+```bash
+bun add -D @better-conversation/cli
+bunx bc generate --adapter drizzle
+```
+
+See [CLI documentation](/docs/cli) for generate and migrate commands.
+
 ## Mount the Handler
 
 <CodeBlockTabs defaultValue="next">

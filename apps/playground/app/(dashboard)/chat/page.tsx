@@ -3,23 +3,14 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useActiveChatter } from "@/contexts/chatter-context";
-import { type Conversation, conversationsApi } from "@/lib/api";
+import { useConversations } from "@better-conversation/react";
 import { MessageCircle } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
 
 export default function ChatPage() {
   const { activeChatter } = useActiveChatter();
-  const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    conversationsApi
-      .list({ limit: 50 })
-      .then((res) => setConversations(res.items.filter((c) => c.status !== "archived")))
-      .catch(() => setConversations([]))
-      .finally(() => setLoading(false));
-  }, []);
+  const { data: conversationsData, isLoading: loading } = useConversations({ limit: 50 });
+  const conversations = (conversationsData?.items ?? []).filter((c) => c.status !== "archived");
 
   return (
     <div className="flex flex-1 flex-col gap-6 p-6">

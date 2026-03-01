@@ -22,38 +22,24 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useActiveChatter } from "@/contexts/chatter-context";
-import { type Conversation, conversationsApi } from "@/lib/api";
+import { convClient } from "@/lib/conversation-client";
+import type { Conversation } from "@better-conversation/core";
+import { useConversations, useCreateConversation } from "@better-conversation/react";
 import { Archive, MessageCircle, Plus } from "lucide-react";
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 
 export default function ConversationsPage() {
   const { activeChatter } = useActiveChatter();
-  const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: conversationsData, isLoading: loading } = useConversations({ limit: 100 });
+  const conversations = conversationsData?.items ?? [];
+  const createConversation = useCreateConversation();
   const [createOpen, setCreateOpen] = useState(false);
   const [form, setForm] = useState({
     title: "",
     status: "open" as const,
   });
-  const [submitting, setSubmitting] = useState(false);
-
-  const loadConversations = useCallback(() => {
-    setLoading(true);
-    conversationsApi
-      .list({ limit: 100 })
-      .then((res) => setConversations(res.items))
-      .catch(() => {
-        toast.error("Failed to load conversations");
-        setConversations([]);
-      })
-      .finally(() => setLoading(false));
-  }, []);
-
-  useEffect(() => {
-    loadConversations();
-  }, [loadConversations]);
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
@@ -61,31 +47,23 @@ export default function ConversationsPage() {
       toast.error("Select a chatter first");
       return;
     }
-    setSubmitting(true);
     try {
-      const conv = await conversationsApi.create({
+      await createConversation.mutateAsync({
         title: form.title || undefined,
-        status: form.status,
         createdBy: activeChatter.id,
         participants: [{ chatterId: activeChatter.id, role: "owner" }],
       });
-      setConversations((prev) => [conv, ...prev]);
       setForm({ title: "", status: "open" });
       setCreateOpen(false);
       toast.success("Conversation created");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to create conversation");
-    } finally {
-      setSubmitting(false);
     }
   }
 
   async function handleArchive(conv: Conversation) {
     try {
-      await conversationsApi.archive(conv.id);
-      setConversations((prev) =>
-        prev.map((c) => (c.id === conv.id ? { ...c, status: "archived" } : c))
-      );
+      await convClient.conversations.archive(conv.id);
       toast.success("Conversation archived");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to archive");
@@ -149,8 +127,8 @@ export default function ConversationsPage() {
                 <Button type="button" variant="outline" onClick={() => setCreateOpen(false)}>
                   Cancel
                 </Button>
-                <Button type="submit" disabled={submitting || !activeChatter}>
-                  {submitting ? "Creating…" : "Create"}
+                <Button type="submit" disabled={createConversation.isPending || !activeChatter}>
+                  {createConversation.isPending ? "Creating…" : "Create"}
                 </Button>
               </DialogFooter>
             </form>

@@ -16,11 +16,10 @@ import {
   SidebarProvider,
 } from "@/components/ui/sidebar";
 import { ChatterProvider } from "@/contexts/chatter-context";
-import { type Chatter, playgroundApi } from "@/lib/api";
+import { useChatters } from "@better-conversation/react";
 import { Key, LayoutDashboard, MessageCircle, MessageSquare, Shield, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
 
 const navItems = [
   { href: "/", label: "Overview", icon: LayoutDashboard },
@@ -33,14 +32,8 @@ const navItems = [
 
 function DashboardSidebar() {
   const pathname = usePathname();
-  const [chattersList, setChattersList] = useState<Chatter[]>([]);
-
-  useEffect(() => {
-    playgroundApi
-      .listChatters()
-      .then(setChattersList)
-      .catch(() => setChattersList([]));
-  }, []);
+  const { data: chattersData } = useChatters({ limit: 100 });
+  const chattersList = chattersData?.items ?? [];
 
   return (
     <Sidebar>

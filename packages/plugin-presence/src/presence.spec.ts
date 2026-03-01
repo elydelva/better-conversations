@@ -1,10 +1,11 @@
 import { describe, expect, test } from "bun:test";
 import { betterConversation, dispatch } from "@better-conversation/core";
 import { createMockAdapter } from "@better-conversation/core/fixtures";
-import { presencePlugin } from "./index.js";
+import { createPresencePlugin } from "./index.js";
 
 describe("plugin-presence", () => {
-  test("presencePlugin exposes name, schemaContribution, routes, createServices", () => {
+  test("createPresencePlugin returns plugin with name, schemaContribution, routes, createServices", () => {
+    const presencePlugin = createPresencePlugin();
     expect(presencePlugin.name).toBe("presence");
     expect(presencePlugin.schemaContribution).toBeDefined();
     expect(presencePlugin.schemaContribution?.extensions?.[0].extendTable).toBe("participants");
@@ -28,7 +29,7 @@ describe("plugin-presence", () => {
         update: async () => ({}),
       },
     });
-    const engine = betterConversation({ adapter, plugins: [presencePlugin] });
+    const engine = betterConversation({ adapter, plugins: [createPresencePlugin()] });
     const req = {
       method: "PATCH",
       path: "/conversations/c1/participants/ch1/read",
@@ -57,7 +58,7 @@ describe("plugin-presence", () => {
         ],
       },
     });
-    const engine = betterConversation({ adapter, plugins: [presencePlugin] });
+    const engine = betterConversation({ adapter, plugins: [createPresencePlugin()] });
     const req = {
       method: "GET",
       path: "/conversations/c1/participants/presence",

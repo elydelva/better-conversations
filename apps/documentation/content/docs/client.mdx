@@ -1,59 +1,132 @@
 ---
 title: Client
-description: Type-safe client for the conversation API.
+description: Type-safe client for the conversation API, with plugins and createFetch.
 ---
 
 ## Installation
 
-```npm
+```bash
 bun add @better-conversation/client
+```
+
+For SSE or history, add the corresponding plugin:
+
+```bash
+bun add @better-conversation/plugin-sse @better-conversation/plugin-history
 ```
 
 ## Create Client
 
-<CodeBlockTabs defaultValue="server">
-  <CodeBlockTabsList>
-    <CodeBlockTabsTrigger value="server">Server / Node</CodeBlockTabsTrigger>
-    <CodeBlockTabsTrigger value="browser">Browser (Next.js)</CodeBlockTabsTrigger>
-  </CodeBlockTabsList>
-  <CodeBlockTab value="server">
+Use `createBetterConversationsClient` with `baseURL` and optional plugins:
 
 ```ts title="lib/conversation-client.ts"
-import { createConversationClient } from "@better-conversation/client";
+import { createBetterConversationsClient } from "@better-conversation/client";
+import { sseClient } from "@better-conversation/plugin-sse/client";
+import { historyClient } from "@better-conversation/plugin-history/client";
 
-const client = createConversationClient({
-  baseUrl: "http://localhost:3000/api/conversation",
-  chatterId: "optional-default",
-  fetchFn: fetch,
+export const convClient = createBetterConversationsClient({
+  baseURL: "/api/conversation",
+  plugins: [sseClient(), historyClient()],
+});
+```
+
+<CodeBlockTabs defaultValue="browser">
+  <CodeBlockTabsList>
+    <CodeBlockTabsTrigger value="browser">Browser</CodeBlockTabsTrigger>
+    <CodeBlockTabsTrigger value="server">Server / Node</CodeBlockTabsTrigger>
+  </CodeBlockTabsList>
+  <CodeBlockTab value="browser">
+
+```ts title="lib/conversation-client.ts"
+import { createBetterConversationsClient } from "@better-conversation/client";
+import { sseClient } from "@better-conversation/plugin-sse/client";
+
+export const convClient = createBetterConversationsClient({
+  baseURL: "/api/conversation", // relative for same-origin
+  plugins: [sseClient()],
 });
 ```
 
   </CodeBlockTab>
-  <CodeBlockTab value="browser">
+  <CodeBlockTab value="server">
 
 ```ts title="lib/conversation-client.ts"
-import { createConversationClient } from "@better-conversation/client";
+import { createBetterConversationsClient } from "@better-conversation/client";
+import { sseClient } from "@better-conversation/plugin-sse/client";
 
-const client = createConversationClient({
-  baseUrl: "/api/conversation", // relative for same-origin
-  chatterId: "optional-default",
+export const convClient = createBetterConversationsClient({
+  baseURL: "http://localhost:3000/api/conversation",
+  fetchFn: fetch,
+  plugins: [sseClient()],
 });
 ```
 
   </CodeBlockTab>
 </CodeBlockTabs>
 
-## Chatters
+## Options
 
-```ts title="example.ts"
+| Option       | Type     | Description                       |
+|--------------|----------|-----------------------------------|
+| `baseURL`    | `string` | Base URL for API requests         |
+| `fetchFn`    | `typeof fetch` | Custom fetch (e.g. Node 18+) |
+| `fetchOptions` | `RequestInit` | Default fetch options        |
+| `plugins`    | `ConversationClientPlugin[]` | Client plugins (sse, history) |
+
+## Plugins
+
+### sseClient
+
+Adds `stream(conversationId)` for Server-Sent Events:
+
+```ts
+import { createBetterConversationsClient } from "@better-conversation/client";
+import { sseClient } from "@better-conversation/plugin-sse/client";
+
+const client = createBetterConversationsClient({
+  baseURL: "/api/conversation",
+  plugins: [sseClient()],
+});
+
+const es = client.stream(conversationId);
+es.addEventListener("block:created", (e) => {
+  const data = JSON.parse(e.data);
+});
+```
+
+### historyClient
+
+Adds `blocks.history(conversationId, blockId)` for block edit history:
+
+```ts
+import { createBetterConversationsClient } from "@better-conversation/client";
+import { historyClient } from "@better-conversation/plugin-history/client";
+
+const client = createBetterConversationsClient({
+  baseURL: "/api/conversation",
+  plugins: [historyClient()],
+});
+
+const entries = await client.blocks.history(conversationId, blockId);
+// BlockHistoryEntry[]
+```
+
+Requires [History plugin](/docs/plugins/history) on the server.
+
+## API Methods
+
+### Chatters
+
+```ts
 client.chatters.find(id);
 client.chatters.create({ displayName, entityType, entityId?, avatarUrl? });
 client.chatters.update(id, { displayName?, avatarUrl?, entityType?, entityId? });
+client.chatters.listConversations(chatterId, limit?, cursor?);
 ```
 
-## Conversations
+### Conversations
 
-```ts title="example.ts"
+```ts
 client.conversations.find(id);
 client.conversations.list({ entityType?, entityId?, limit?, cursor? });
 client.conversations.create({
@@ -64,11 +137,12 @@ client.conversations.create({
   entityId?,
 });
 client.conversations.update(id, { title?, status?, metadata? });
+client.conversations.archive(id);
 ```
 
-## Participants
+### Participants
 
-```ts title="example.ts"
+```ts
 client.participants.list(conversationId);
 client.participants.add(conversationId, { chatterId, role });
 client.participants.remove(conversationId, chatterId);
@@ -76,9 +150,9 @@ client.participants.setRole(conversationId, chatterId, role);
 client.participants.markRead(conversationId, chatterId);
 ```
 
-## Blocks
+### Blocks
 
-```ts title="example.ts"
+```ts
 client.blocks.list(conversationId, { limit?, before?, after?, threadParentId? });
 client.blocks.send(conversationId, {
   authorId,
@@ -87,25 +161,85 @@ client.blocks.send(conversationId, {
   metadata?,
   threadParentId?,
 });
+client.blocks.update(conversationId, blockId, { body?, metadata? });
 client.blocks.updateMeta(conversationId, blockId, { body?, metadata? });
 client.blocks.delete(conversationId, blockId);
+// With historyClient: client.blocks.history(conversationId, blockId)
 ```
 
-## Policies
+### Policies
 
-```ts title="example.ts"
+```ts
 client.policies.resolve(chatterId, conversationId?, threadParentBlockId?);
+client.policies.getGlobal();
+client.policies.setGlobal(policy);
+client.policies.listRoles();
+client.policies.setRole(role, policy);
+client.policies.setChatter(chatterId, policy);
+client.policies.setConversation(conversationId, policy);
+client.policies.setThread(conversationId, blockId, policy);
 ```
 
-## Stream (SSE)
+### Permissions
 
-```ts title="example.ts"
-const es = client.stream(conversationId);
-es.addEventListener("block:created", (e) => {
-  const data = JSON.parse(e.data);
-});
+```ts
+client.permissions.list(chatterId);
+client.permissions.grant(chatterId, { action, scope? });
+client.permissions.revoke(chatterId, action);
 ```
+
+## React Hooks
+
+Use the `@better-conversation/react` package for React integration with TanStack Query:
+
+```ts
+import {
+  ConversationProvider,
+  useChatters,
+  useConversation,
+  useBlocks,
+  useParticipants,
+  usePolicy,
+} from "@better-conversation/react";
+```
+
+```tsx
+// Wrap your app with ConversationProvider
+<ConversationProvider client={convClient}>
+  <App />
+</ConversationProvider>
+
+function ConversationView({ conversationId }: { conversationId: string }) {
+  const { data: conversation, isLoading, error } = useConversation(conversationId);
+  const { data: blocksData } = useBlocks(conversationId, { limit: 50 });
+  const { data: participants } = useParticipants(conversationId);
+  // ...
+}
+```
+
+| Hook | Description |
+|------|-------------|
+| `useChatters` | Paginated list of chatters |
+| `useConversation` | Fetch a single conversation |
+| `useBlocks` | Paginated blocks for a conversation |
+| `useParticipants` | Participants in a conversation |
+| `usePolicy` | Resolved policy for a chatter |
 
 ## Error Handling
 
 The client throws on non-2xx responses. The error message comes from the API's `message` field.
+
+## Legacy API
+
+`createConversationClient` is deprecated. Use `createBetterConversationsClient` instead:
+
+```ts
+// Deprecated
+createConversationClient({ baseUrl: "/api/conversation" });
+
+// Preferred
+createBetterConversationsClient({
+  baseURL: "/api/conversation",
+  plugins: [sseClient()],
+});
+```

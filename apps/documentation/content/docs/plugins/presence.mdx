@@ -16,17 +16,17 @@ Presence extends the `participants` table with `lastReadAt`, `lastSeenAt`, and `
 ```ts title="lib/conversation.ts"
 import { betterConversation } from "@better-conversation/core";
 import { drizzleAdapter } from "@better-conversation/adapter-drizzle";
-import { presencePlugin } from "@better-conversation/plugin-presence";
+import { createPresencePlugin } from "@better-conversation/plugin-presence";
 import { db } from "./db";
 
 const adapter = drizzleAdapter(db, {
   provider: "pg",
-  plugins: [presencePlugin],
+  plugins: [createPresencePlugin()],
 });
 
 const conv = betterConversation({
   adapter,
-  plugins: [presencePlugin],
+  plugins: [createPresencePlugin()],
 });
 ```
 

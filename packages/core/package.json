@@ -29,6 +29,7 @@
   },
   "files": ["dist"],
   "dependencies": {
-    "@better-conversation/errors": "workspace:*"
+    "@better-conversation/errors": "workspace:*",
+    "@better-conversation/types": "workspace:*"
   }
 }

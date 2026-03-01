@@ -1,5 +1,5 @@
 import type { Chatter, ChatterAdapter, ChatterInput } from "@better-conversation/core";
-import { and, eq } from "drizzle-orm";
+import { and, desc, eq, lt } from "drizzle-orm";
 import type { DrizzleAdapterContext } from "./shared";
 import { val } from "./shared";
 
@@ -32,6 +32,42 @@ export function createChattersAdapter(ctx: DrizzleAdapterContext): ChatterAdapte
   return {
     async find(id) {
       return findChatter(ctx, id);
+    },
+    async list(params) {
+      const limit = Math.min(Math.max(params?.limit ?? 50, 1), 100);
+      const rows = params?.cursor
+        ? (() => {
+            const cursorDate = new Date(params.cursor);
+            if (Number.isNaN(cursorDate.getTime())) {
+              return db
+                .select()
+                .from(chatters)
+                .orderBy(desc(chatters.createdAt))
+                .limit(limit + 1);
+            }
+            return db
+              .select()
+              .from(chatters)
+              .where(lt(chatters.createdAt, cursorDate))
+              .orderBy(desc(chatters.createdAt))
+              .limit(limit + 1);
+          })()
+        : db
+            .select()
+            .from(chatters)
+            .orderBy(desc(chatters.createdAt))
+            .limit(limit + 1);
+      const result = await rows;
+      const hasMore = result.length > limit;
+      const items = result.slice(0, limit).map((r: Record<string, unknown>) => mapRowToChatter(r));
+      const last = items[items.length - 1];
+      const cursor = hasMore && last ? last.createdAt.toISOString() : undefined;
+      return {
+        items,
+        total: items.length,
+        cursor: cursor ?? null,
+        hasMore,
+      };
     },
     async findByEntity(type, entityId) {
       const result = await db

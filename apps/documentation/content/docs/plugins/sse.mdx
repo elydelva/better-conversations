@@ -13,11 +13,11 @@ bun add @better-conversation/plugin-sse
 
 ```ts title="lib/conversation.ts"
 import { betterConversation } from "@better-conversation/core";
-import { ssePlugin } from "@better-conversation/plugin-sse";
+import { createSsePlugin } from "@better-conversation/plugin-sse";
 
 const conv = betterConversation({
   adapter,
-  plugins: [ssePlugin],
+  plugins: [createSsePlugin()],
 });
 ```
 

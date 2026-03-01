@@ -14,7 +14,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useActiveChatter } from "@/contexts/chatter-context";
-import { permissionsApi } from "@/lib/api";
+import { convClient } from "@/lib/conversation-client";
 import { Plus, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -41,7 +41,7 @@ export default function PermissionsPage() {
       return;
     }
     setLoading(true);
-    permissionsApi
+    convClient.permissions
       .list(activeChatter.id)
       .then(setPermissions)
       .catch(() => {
@@ -60,7 +60,7 @@ export default function PermissionsPage() {
     if (!activeChatter || !addAction.trim()) return;
     setSubmitting(true);
     try {
-      await permissionsApi.grant(activeChatter.id, {
+      await convClient.permissions.grant(activeChatter.id, {
         action: addAction.trim(),
         scope: addScope.trim() || undefined,
       });
@@ -79,7 +79,7 @@ export default function PermissionsPage() {
   async function handleRevoke(action: string) {
     if (!activeChatter) return;
     try {
-      await permissionsApi.revoke(activeChatter.id, action);
+      await convClient.permissions.revoke(activeChatter.id, action);
       loadPermissions();
       toast.success("Permission revoked");
     } catch (err) {

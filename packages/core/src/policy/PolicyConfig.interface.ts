@@ -1,4 +1,4 @@
-import type { PolicyObject } from "./PolicyObject.interface.js";
+import type { PolicyObject } from "@better-conversation/types";
 
 export type MergeStrategy = "override" | "restrict";
 

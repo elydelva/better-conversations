@@ -2,7 +2,7 @@ export { createAdapterHelpers } from "./helpers.js";
 export { createUnsupportedPolicyAdapter } from "./unsupportedPolicies.js";
 export { createUnsupportedRegistriesAdapter } from "./unsupportedRegistries.js";
 export type { AdapterOptions } from "./helpers.js";
-export type { ChatterAdapter } from "./ChatterAdapter.interface.js";
+export type { ChatterAdapter, ChatterListParams } from "./ChatterAdapter.interface.js";
 export type { ConversationAdapter } from "./ConversationAdapter.interface.js";
 export type { ParticipantAdapter } from "./ParticipantAdapter.interface.js";
 export type { BlockAdapter } from "./BlockAdapter.interface.js";

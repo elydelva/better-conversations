@@ -53,6 +53,13 @@ export const handleChattersUpdate: RouteHandler = async ({ engine, req }) => {
   return successResponse(chatter);
 };
 
+export const handleChattersList: RouteHandler = async ({ engine, req }) => {
+  const limit = req.query.limit ? Number.parseInt(req.query.limit, 10) : 50;
+  const cursor = req.query.cursor;
+  const result = await engine.chatters.list({ limit, cursor });
+  return successResponse(result);
+};
+
 export const handleChatterConversations: RouteHandler = async ({ engine, req }) => {
   const chatterId = req.params.id;
   const limit = req.query.limit ? Number.parseInt(req.query.limit, 10) : 50;

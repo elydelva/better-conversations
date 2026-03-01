@@ -15,8 +15,9 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useActiveChatter } from "@/contexts/chatter-context";
-import { playgroundApi, policiesApi } from "@/lib/api";
-import { useEffect, useState } from "react";
+import { convClient } from "@/lib/conversation-client";
+import { type PolicyObject, getDefaultGlobal, mergePolicyLevels } from "@better-conversation/core";
+import { useState } from "react";
 import { toast } from "sonner";
 
 export default function PoliciesPage() {
@@ -33,36 +34,23 @@ export default function PoliciesPage() {
   const [loading, setLoading] = useState(false);
   const [applyLoading, setApplyLoading] = useState<string | null>(null);
 
-  useEffect(() => {
-    playgroundApi.listChatters().catch(() => []);
-  }, []);
-
-  async function handleResolve() {
+  function handleResolve() {
     setLoading(true);
     setResolved(null);
     try {
       const globalPolicy = toPolicyObject(globalForm);
-      const roles: Record<string, Record<string, unknown>> = {};
-      const mp = toPolicyObject(memberForm);
-      const op = toPolicyObject(ownerForm);
-      if (Object.keys(mp).length > 0) roles.member = mp;
-      if (Object.keys(op).length > 0) roles.owner = op;
-
-      const res = await fetch("/api/playground/policies/resolve", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          global: Object.keys(globalPolicy).length > 0 ? globalPolicy : undefined,
-          roles: Object.keys(roles).length > 0 ? roles : undefined,
-          mergeStrategy,
-          chatterId: chatterId || activeChatter?.id || "test-chatter",
-          conversationId: conversationId || undefined,
-          threadParentBlockId: threadParentBlockId || undefined,
-          role,
-        }),
-      });
-      const data = await res.json();
-      setResolved(data);
+      const levels: Partial<PolicyObject>[] = [];
+      const effectiveGlobal: PolicyObject =
+        Object.keys(globalPolicy).length > 0 ? (globalPolicy as PolicyObject) : getDefaultGlobal();
+      if (Object.keys(effectiveGlobal).length > 0) {
+        levels.push(effectiveGlobal);
+      }
+      const rolePolicy = role === "member" ? toPolicyObject(memberForm) : toPolicyObject(ownerForm);
+      if (rolePolicy && Object.keys(rolePolicy).length > 0) {
+        levels.push(rolePolicy);
+      }
+      const resolvedPolicy = mergePolicyLevels(levels, mergeStrategy);
+      setResolved(resolvedPolicy as Record<string, unknown>);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to resolve");
     } finally {
@@ -78,7 +66,7 @@ export default function PoliciesPage() {
         toast.error("Add at least one policy field");
         return;
       }
-      await policiesApi.setGlobal(policy);
+      await convClient.policies.setGlobal(policy);
       toast.success("Global policy updated");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to apply");
@@ -95,7 +83,7 @@ export default function PoliciesPage() {
         toast.error("Add at least one policy field");
         return;
       }
-      await policiesApi.setRole(r, policy);
+      await convClient.policies.setRole(r, policy);
       toast.success(`${r} role policy updated`);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to apply");
@@ -117,7 +105,7 @@ export default function PoliciesPage() {
         toast.error("Add at least one policy field");
         return;
       }
-      await policiesApi.setChatter(cid, policy);
+      await convClient.policies.setChatter(cid, policy);
       toast.success("Chatter policy updated");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to apply");

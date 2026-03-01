@@ -1,8 +1,12 @@
-import type { ChatterAdapter } from "../adapter/index.js";
-import type { Chatter, ChatterInput } from "../types/index.js";
+import type { ChatterAdapter, ChatterListParams } from "../adapter/index.js";
+import type { Chatter, ChatterInput, Paginated } from "../types/index.js";
 
 export class ChatterService {
   constructor(private readonly chatters: ChatterAdapter) {}
+
+  async list(params?: ChatterListParams): Promise<Paginated<Chatter>> {
+    return this.chatters.list(params);
+  }
 
   async find(id: string): Promise<Chatter | null> {
     return this.chatters.find(id);

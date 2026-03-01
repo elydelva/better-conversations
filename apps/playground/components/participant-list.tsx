@@ -22,13 +22,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  type Chatter,
-  type Participant,
-  chattersApi,
-  participantsApi,
-  playgroundApi,
-} from "@/lib/api";
+import type { Chatter, Participant } from "@better-conversation/core";
+import { useConversationClient } from "@better-conversation/react";
 import { Plus, UserMinus } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -52,6 +47,7 @@ export function ParticipantList({
   activeChatterId,
   onParticipantsChange,
 }: ParticipantListProps) {
+  const client = useConversationClient();
   const [addOpen, setAddOpen] = useState(false);
   const [addChatterId, setAddChatterId] = useState("");
   const [addRole, setAddRole] = useState<string>("member");
@@ -65,7 +61,7 @@ export function ParticipantList({
     if (!addChatterId) return;
     setSubmitting(true);
     try {
-      await participantsApi.add(conversationId, {
+      await client.participants.add(conversationId, {
         chatterId: addChatterId,
         role: addRole,
       });
@@ -83,7 +79,7 @@ export function ParticipantList({
 
   async function handleRemove(participant: Participant) {
     try {
-      await participantsApi.remove(conversationId, participant.chatterId);
+      await client.participants.remove(conversationId, participant.chatterId);
       onParticipantsChange();
       toast.success("Participant removed");
     } catch (err) {
@@ -93,7 +89,7 @@ export function ParticipantList({
 
   async function handleSetRole(participant: Participant, role: string) {
     try {
-      await participantsApi.setRole(conversationId, participant.chatterId, role);
+      await client.participants.setRole(conversationId, participant.chatterId, role);
       onParticipantsChange();
       toast.success("Role updated");
     } catch (err) {
@@ -103,7 +99,7 @@ export function ParticipantList({
 
   async function handleMarkRead(participant: Participant) {
     try {
-      await participantsApi.markRead(conversationId, participant.chatterId);
+      await client.participants.markRead(conversationId, participant.chatterId);
       onParticipantsChange();
       toast.success("Marked as read");
     } catch (err) {

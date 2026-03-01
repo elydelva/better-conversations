@@ -1,0 +1,90 @@
+---
+title: CLI
+description: Generate database schemas and run migrations with the CLI.
+icon: Terminal
+---
+
+## Installation
+
+```bash
+bun add -D @better-conversation/cli
+```
+
+Or run directly with `bunx`:
+
+```bash
+bunx bc@latest generate
+```
+
+## Configuration Discovery
+
+The CLI looks for `conversation.ts` or `conv.ts` in:
+
+- `./`
+- `./lib`
+- `./utils`
+- `./src`
+- `./app`
+- `./server`
+
+Use `--config` to specify a custom path:
+
+```bash
+bunx bc generate --config ./config/conversation.ts
+```
+
+Your config file must export `conv` (or `conversation`) from `betterConversation()`. The engine exposes schema contributors for generation.
+
+## Generate
+
+Generate database schema files from your conversation config and plugins.
+
+### Drizzle
+
+Outputs a Drizzle `schema.ts`:
+
+```bash
+bunx bc generate --adapter drizzle
+```
+
+Default output: `schema.ts` in the current directory. Use `--output` to customize:
+
+```bash
+bunx bc generate --adapter drizzle --output ./lib/bc-schema.ts
+```
+
+### Prisma
+
+Outputs a schema snippet for `prisma/schema.prisma`:
+
+```bash
+bunx bc generate --adapter prisma
+```
+
+Copy the output into your Prisma schema file.
+
+### Options
+
+| Option      | Description                          |
+|-------------|--------------------------------------|
+| `--config`  | Path to conversation config file     |
+| `--adapter` | Target adapter: `drizzle` or `prisma` |
+| `--output`  | Output file path (Drizzle only)      |
+| `--yes`     | Skip confirmations                   |
+
+## Migrate
+
+Run database migrations (delegates to your ORM):
+
+```bash
+bunx bc migrate
+```
+
+The CLI uses the same config discovery. Migrations run via Drizzle Kit or Prisma based on your project setup.
+
+## Workflow
+
+1. Define your conversation engine with plugins in `conversation.ts`
+2. Run `bunx bc generate` to emit the schema
+3. Run your ORM's migration command (e.g. `drizzle-kit generate`, `drizzle-kit migrate`)
+4. Or use `bunx bc migrate` to execute migrations

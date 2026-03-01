@@ -16,15 +16,18 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useActiveChatter } from "@/contexts/chatter-context";
-import { type Chatter, chattersApi, playgroundApi } from "@/lib/api";
+import { convClient } from "@/lib/conversation-client";
+import type { Chatter } from "@better-conversation/core";
+import { useChatters, useCreateChatter } from "@better-conversation/react";
 import { Plus } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 
 export default function ChattersPage() {
   const { activeChatter, setActiveChatter } = useActiveChatter();
-  const [chatters, setChatters] = useState<Chatter[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: chattersData, isLoading: loading } = useChatters({ limit: 100 });
+  const chatters = chattersData?.items ?? [];
+  const createChatter = useCreateChatter();
   const [createOpen, setCreateOpen] = useState(false);
   const [form, setForm] = useState({
     displayName: "",
@@ -32,49 +35,28 @@ export default function ChattersPage() {
     entityId: "",
     avatarUrl: "",
   });
-  const [submitting, setSubmitting] = useState(false);
-
-  const loadChatters = useCallback(() => {
-    setLoading(true);
-    playgroundApi
-      .listChatters()
-      .then(setChatters)
-      .catch(() => {
-        toast.error("Failed to load chatters");
-        setChatters([]);
-      })
-      .finally(() => setLoading(false));
-  }, []);
-
-  useEffect(() => {
-    loadChatters();
-  }, [loadChatters]);
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
-    setSubmitting(true);
     try {
-      const chatter = await chattersApi.create({
+      const chatter = await createChatter.mutateAsync({
         displayName: form.displayName,
         entityType: form.entityType,
         entityId: form.entityId || undefined,
         avatarUrl: form.avatarUrl || undefined,
       });
-      setChatters((prev) => [chatter, ...prev]);
       setActiveChatter(chatter);
       setForm({ displayName: "", entityType: "user", entityId: "", avatarUrl: "" });
       setCreateOpen(false);
       toast.success(`Chatter "${chatter.displayName}" created`);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to create chatter");
-    } finally {
-      setSubmitting(false);
     }
   }
 
   async function handleUse(chatter: Chatter) {
     try {
-      const full = await chattersApi.find(chatter.id);
+      const full = await convClient.chatters.find(chatter.id);
       setActiveChatter(full);
       toast.success(`Using "${full.displayName}"`);
     } catch {
@@ -150,8 +132,8 @@ export default function ChattersPage() {
                 <Button type="button" variant="outline" onClick={() => setCreateOpen(false)}>
                   Cancel
                 </Button>
-                <Button type="submit" disabled={submitting}>
-                  {submitting ? "Creating…" : "Create"}
+                <Button type="submit" disabled={createChatter.isPending}>
+                  {createChatter.isPending ? "Creating…" : "Create"}
                 </Button>
               </DialogFooter>
             </form>
