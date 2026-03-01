@@ -60,12 +60,4 @@ export class ParticipantService {
     }
     return this.participants.update(participant.id, { role });
   }
-
-  async markRead(conversationId: string, chatterId: string): Promise<Participant> {
-    const participant = await this.participants.find(conversationId, chatterId);
-    if (!participant) {
-      throw new ParticipantNotFoundError(conversationId, chatterId);
-    }
-    return this.participants.update(participant.id, { lastReadAt: new Date() });
-  }
 }

@@ -5,7 +5,10 @@ export interface Participant {
   role: string;
   joinedAt: Date;
   leftAt: Date | null;
-  lastReadAt: Date | null;
+  /** Presence: set by plugin-presence */
+  lastReadAt?: Date | null;
+  lastSeenAt?: Date | null;
+  typingUntil?: Date | null;
   metadata: Record<string, unknown> | null;
 }
 

@@ -103,20 +103,4 @@ describe("ParticipantService", () => {
       ParticipantValidationError
     );
   });
-
-  test("markRead throws ParticipantNotFoundError when not found", async () => {
-    const participants = {
-      find: async () => null,
-      add: async () => createMockParticipant(),
-      update: async () => createMockParticipant(),
-      remove: async () => {},
-      list: async () => [],
-    };
-    const adapter = createMockAdapter({ participants });
-    const service = new ParticipantService(adapter.participants);
-
-    await expect(service.markRead("conv_1", "chatter_missing")).rejects.toThrow(
-      ParticipantNotFoundError
-    );
-  });
 });

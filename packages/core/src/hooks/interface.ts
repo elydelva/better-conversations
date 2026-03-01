@@ -1,6 +1,7 @@
 import type { BlockAfterSendCtx } from "./BlockAfterSend.js";
 import type { BlockBeforeSendCtx, BlockOutcomes } from "./BlockBeforeSend.js";
 import type { BlockDeleteCtx, DeleteOutcomes } from "./BlockDelete.js";
+import type { BlockAfterUpdateCtx, BlockBeforeUpdateCtx } from "./BlockUpdate.js";
 import type { ConversationAfterCreateCtx } from "./ConversationAfterCreate.js";
 import type { ConversationCreateCtx, ConversationOutcomes } from "./ConversationCreate.js";
 import type { StatusChangeCtx, StatusOutcomes } from "./ConversationStatusChange.js";
@@ -18,6 +19,8 @@ export interface ConversationHooks<
   onBlockBeforeSend?: (ctx: BlockBeforeSendCtx, outcomes: BlockOutcomes) => Promise<HookResult>;
   onBlockAfterSend?: (ctx: BlockAfterSendCtx) => Promise<void>;
   onBlockBeforeDelete?: (ctx: BlockDeleteCtx, outcomes: DeleteOutcomes) => Promise<HookResult>;
+  onBlockBeforeUpdate?: (ctx: BlockBeforeUpdateCtx) => Promise<void>;
+  onBlockAfterUpdate?: (ctx: BlockAfterUpdateCtx) => Promise<void>;
 
   onConversationBeforeCreate?: (
     ctx: ConversationCreateCtx,

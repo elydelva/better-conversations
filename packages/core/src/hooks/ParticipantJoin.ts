@@ -6,6 +6,10 @@ export interface ParticipantJoinCtx {
   chatter: Chatter;
   role: string;
   participants: Participant[];
+  /** The participant that just joined (for onParticipantAfterJoin) */
+  participant?: Participant;
+  /** Engine reference for plugin hooks that need to update state */
+  engine?: unknown;
 }
 
 export interface ParticipantOutcomes {

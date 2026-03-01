@@ -14,4 +14,6 @@ export interface DatabaseAdapter {
   permissions: PermissionAdapter;
   registries: RegistryAdapter;
   policies: PolicyAdapter;
+  /** Adapter extensions (e.g. history from plugin-history) */
+  extensions?: Record<string, unknown>;
 }
