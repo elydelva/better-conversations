@@ -28,7 +28,6 @@ import {
   handlePoliciesSetConversation,
   handlePoliciesSetGlobal,
   handlePoliciesSetRole,
-  handlePoliciesSetThread,
 } from "./handlers.js";
 import { matchPath } from "./path.js";
 import type { RouteHandler } from "./types.js";
@@ -115,11 +114,6 @@ const coreRoutes: Route[] = [
     method: "PATCH",
     path: "/policies/conversations/:id",
     handler: handlePoliciesSetConversation,
-  },
-  {
-    method: "PATCH",
-    path: "/policies/conversations/:id/threads/:blockId",
-    handler: handlePoliciesSetThread,
   },
   {
     method: "GET",

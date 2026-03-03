@@ -85,12 +85,6 @@ export class BlockService {
           expose: true,
         });
       }
-      if (resolvedPolicy.threadClosed && isThread) {
-        throw new BlockRefusedError("Thread is closed", {
-          code: "THREAD_CLOSED",
-          expose: true,
-        });
-      }
       if (resolvedPolicy.deniedBlocks?.includes(input.type)) {
         throw new BlockRefusedError(`Block type "${input.type}" is denied`, {
           code: "BLOCK_TYPE_DENIED",
@@ -232,6 +226,9 @@ export class BlockService {
         conversation,
         author,
         participants,
+        engine: this.config.engine,
+        isThread,
+        isFirstReply,
       };
       await hooks.onBlockAfterSend(afterCtx);
     }

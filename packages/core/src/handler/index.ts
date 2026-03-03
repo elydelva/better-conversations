@@ -13,3 +13,4 @@ export { buildRoutes, routes, findRoute } from "./routes.js";
 export type { Route } from "./routes.js";
 export { dispatch } from "./dispatch.js";
 export * from "./handlers.js";
+export * from "./securityHelpers.js";

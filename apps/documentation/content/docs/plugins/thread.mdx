@@ -3,6 +3,28 @@ title: Thread
 description: Tree of blocks — root has threadParentId null; replies reference parent block ID.
 ---
 
+The Thread plugin provides thread-specific policies and hooks, allowing you to control threading behavior across your conversations.
+
+## Installation
+
+```bash
+bun add @better-conversation/plugin-thread
+```
+
+## Setup
+
+```ts title="engine.ts"
+import { betterConversation } from "@better-conversation/core";
+import { createThreadPlugin } from "@better-conversation/plugin-thread";
+
+const engine = betterConversation({
+  adapter,
+  plugins: [
+    createThreadPlugin()
+  ],
+});
+```
+
 ## Structure
 
 ```
@@ -55,3 +77,15 @@ Policy fields that affect threads:
 | `maxThreadDepth` | Max nesting depth (1 = one level of replies) | `1` |
 | `maxThreadReplies` | Max replies per parent | — |
 | `threadClosed` | Thread closed (no new replies) | `false` |
+
+## API
+
+The Thread plugin adds a route to set policies specifically for a thread (a parent block and its replies).
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `PATCH` | `/policies/conversations/:id/threads/:blockId` | Set a policy for a thread |
+
+## Hooks
+
+- `onThreadCreated(ctx, outcomes)`: Fired when the first reply in a thread is sent. You can block thread creation by returning `outcomes.refuse()`.

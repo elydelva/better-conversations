@@ -12,7 +12,6 @@
     "conversation",
     "participant",
     "block",
-    "thread",
     "role",
     "policy",
     "hooks",

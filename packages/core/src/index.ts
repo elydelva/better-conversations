@@ -130,6 +130,11 @@ export {
   matchPath,
   routes,
   findRoute,
+  requireAuth,
+  requireAuthMatch,
+  requireParticipant,
+  requirePermission,
+  requireRole,
 } from "./handler/index.js";
 export type {
   CoreRequest,

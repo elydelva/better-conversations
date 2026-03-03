@@ -372,6 +372,7 @@
       "dependencies": {
         "@better-conversation/core": "workspace:*",
         "@better-conversation/errors": "workspace:*",
+        "zod": "^4.3.6",
       },
       "devDependencies": {
         "typescript": "catalog:",
@@ -395,6 +396,18 @@
         "@better-conversation/client": "workspace:*",
         "@better-conversation/core": "workspace:*",
         "@better-conversation/errors": "workspace:*",
+      },
+      "devDependencies": {
+        "typescript": "catalog:",
+      },
+    },
+    "packages/plugin-thread": {
+      "name": "@better-conversation/plugin-thread",
+      "version": "1.0.0",
+      "dependencies": {
+        "@better-conversation/core": "workspace:*",
+        "@better-conversation/errors": "workspace:*",
+        "@better-conversation/schema": "workspace:*",
       },
       "devDependencies": {
         "typescript": "catalog:",
@@ -507,6 +520,8 @@
     "@better-conversation/plugin-rate-limit": ["@better-conversation/plugin-rate-limit@workspace:packages/plugin-rate-limit"],
 
     "@better-conversation/plugin-sse": ["@better-conversation/plugin-sse@workspace:packages/plugin-sse"],
+
+    "@better-conversation/plugin-thread": ["@better-conversation/plugin-thread@workspace:packages/plugin-thread"],
 
     "@better-conversation/react": ["@better-conversation/react@workspace:packages/react"],
 
