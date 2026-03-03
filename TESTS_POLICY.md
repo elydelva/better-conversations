@@ -212,7 +212,17 @@ describe("BlockService", () => {
 
 ---
 
-## 8. Exclusions and config
+## 8. E2E tests
+
+- **Package**: `packages/e2e` — end-to-end tests against real handlers.
+- **Express**: Uses `supertest` against an Express app with `createExpressHandler`.
+- **Hono**: Uses native `fetch` against a Hono app with `createHonoHandler` (no server).
+- **In-memory adapter**: E2E uses `createInMemoryAdapter` for full CRUD without a real DB.
+- Run: `bun test packages/e2e`.
+
+---
+
+## 9. Exclusions and config
 
 - Spec files are excluded from the build (`**/*.spec.ts`, `**/*.test.ts` in `tsconfig` `exclude`).
 - Run all tests: `bun test` at the repo root (discovers specs in all packages).
@@ -220,7 +230,7 @@ describe("BlockService", () => {
 
 ---
 
-## 9. Checklist for new features
+## 10. Checklist for new features
 
 Before merging a feature:
 
@@ -235,7 +245,7 @@ Before merging a feature:
 
 ---
 
-## 10. Anti-patterns (avoid)
+## 11. Anti-patterns (avoid)
 
 | Anti-pattern | Instead |
 |--------------|---------|

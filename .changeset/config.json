@@ -7,6 +7,6 @@
   "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
-  "ignore": ["@better-conversation/benchmarks", "@better-conversation/conformance"],
+  "ignore": ["@better-conversation/benchmarks", "@better-conversation/conformance", "@better-conversation/e2e"],
   "packages": ["packages/*"]
 }
