@@ -1,6 +1,7 @@
 {
   "name": "@better-conversation/benchmarks",
   "version": "0.0.1",
+  "private": true,
   "type": "module",
   "scripts": {
     "bench": "bun run src/run.ts",

@@ -1,6 +1,6 @@
 {
   "name": "@better-conversation/core",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -27,8 +27,14 @@
   "devDependencies": {
     "typescript": "catalog:"
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "dependencies": {
+    "@better-agnostic/adapter": "^0.0.3",
+    "@better-agnostic/errors": "^0.0.3",
+    "@better-agnostic/handler": "^0.0.3",
+    "@better-agnostic/schema": "^0.0.3",
     "@better-conversation/errors": "workspace:*",
     "@better-conversation/schema": "workspace:*",
     "@better-conversation/types": "workspace:*"

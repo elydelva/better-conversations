@@ -1,6 +1,6 @@
 {
   "name": "@better-conversation/adapter-drizzle",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "type": "module",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
@@ -11,6 +11,8 @@
     "build": "tsc"
   },
   "dependencies": {
+    "@better-agnostic/adapter": "^0.0.3",
+    "@better-agnostic/schema": "^0.0.3",
     "@better-conversation/core": "workspace:*",
     "drizzle-orm": "^0.45.1"
   },

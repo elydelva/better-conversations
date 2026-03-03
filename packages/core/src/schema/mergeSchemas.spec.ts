@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import type { SchemaContribution } from "./SchemaLanguage.js";
-import { mergeSchemas } from "./mergeSchemas.js";
+import type { SchemaContribution } from "@better-agnostic/schema";
+import { mergeSchemas } from "@better-agnostic/schema";
 
 describe("mergeSchemas", () => {
   test("merges tables from multiple contributions", () => {

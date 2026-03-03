@@ -1,9 +1,9 @@
 {
   "name": "@better-conversation/cli",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "type": "module",
   "bin": {
-    "bc": "./dist/cli.js"
+    "bc": "dist/cli.js"
   },
   "main": "./dist/cli.js",
   "types": "./dist/cli.d.ts",
@@ -18,5 +18,7 @@
     "@types/node": "^22.0.0",
     "typescript": "catalog:"
   },
-  "files": ["dist"]
+  "files": [
+    "dist"
+  ]
 }

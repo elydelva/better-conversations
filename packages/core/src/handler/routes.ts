@@ -1,3 +1,4 @@
+import { findRoute as findRouteAgnostic } from "@better-agnostic/handler";
 import type { ConversationPlugin } from "../config/Plugin.interface.js";
 import {
   handleBlocksDelete,
@@ -29,7 +30,6 @@ import {
   handlePoliciesSetGlobal,
   handlePoliciesSetRole,
 } from "./handlers.js";
-import { matchPath } from "./path.js";
 import type { RouteHandler } from "./types.js";
 
 export interface Route {
@@ -161,16 +161,4 @@ export function buildRoutes(plugins?: ConversationPlugin[]): Route[] {
 /** @deprecated Use buildRoutes(plugins) — kept for backward compat when no plugins */
 export const routes = coreRoutes;
 
-export function findRoute(
-  routesToSearch: Route[],
-  method: string,
-  path: string
-): { route: Route; params: Record<string, string> } | null {
-  const normalizedPath = path.replace(/\/$/, "") || "/";
-  for (const route of routesToSearch) {
-    if (route.method !== method) continue;
-    const { matches, params } = matchPath(route.path, normalizedPath);
-    if (matches) return { route, params };
-  }
-  return null;
-}
+export const findRoute = findRouteAgnostic;

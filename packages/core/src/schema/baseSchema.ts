@@ -1,4 +1,4 @@
-import type { SchemaContribution } from "./SchemaLanguage.js";
+import type { SchemaContribution } from "@better-agnostic/schema";
 
 export const baseSchemaContribution: SchemaContribution = {
   tables: [

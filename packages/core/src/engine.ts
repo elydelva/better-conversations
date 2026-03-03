@@ -1,3 +1,4 @@
+import type { SchemaContributor } from "@better-agnostic/schema";
 import {
   type ConversationConfig,
   type SecurityConfig,
@@ -5,12 +6,12 @@ import {
 } from "./config/index.js";
 import type { Route } from "./handler/routes.js";
 import { buildRoutes } from "./handler/routes.js";
+import type { CoreResponse } from "./handler/types.js";
 import type { BlockAfterSendCtx } from "./hooks/BlockAfterSend.js";
 import type { ConversationAfterCreateCtx } from "./hooks/ConversationAfterCreate.js";
 import { defaultBlockRegistry } from "./registry/defaultBlockRegistry.js";
 import { defaultRoleRegistry } from "./registry/defaultRoleRegistry.js";
 import type { BlockRegistry, RoleRegistry } from "./registry/index.js";
-import type { SchemaContributor } from "./schema/buildSchema.js";
 import { BlockService } from "./services/BlockService.js";
 import { ChatterService } from "./services/ChatterService.js";
 import { ConversationService } from "./services/ConversationService.js";
@@ -148,8 +149,21 @@ export class ConversationEngine<
     }
   }
 
-  getRoutes(): Route[] {
-    return buildRoutes(this.config.plugins);
+  /** Returns routes compatible with DispatchableEngine (handler accepts unknown ctx) */
+  getRoutes(): Array<{
+    method: string;
+    path: string;
+    handler: (ctx: unknown) => Promise<CoreResponse> | CoreResponse;
+  }> {
+    const routes = buildRoutes(this.config.plugins);
+    return routes.map((r) => ({
+      method: r.method,
+      path: r.path,
+      handler: (ctx: unknown) =>
+        r.handler(
+          ctx as { engine: ConversationEngine; req: import("./handler/types.js").CoreRequest }
+        ),
+    }));
   }
 
   getPlugin<T>(name: string): T | undefined {

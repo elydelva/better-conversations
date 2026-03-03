@@ -1,10 +1,10 @@
 import { describe, expect, test } from "bun:test";
-import { createAdapterHelpers } from "./helpers.js";
+import { createAdapterHelpers } from "@better-agnostic/adapter";
 
 describe("createAdapterHelpers", () => {
-  test("default tablePrefix is bc_", () => {
+  test("default tablePrefix is empty (from @better-agnostic/adapter)", () => {
     const helpers = createAdapterHelpers();
-    expect(helpers.tablePrefix).toBe("bc_");
+    expect(helpers.tablePrefix).toBe("");
   });
 
   test("custom tablePrefix when provided", () => {

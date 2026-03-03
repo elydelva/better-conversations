@@ -1,5 +1,20 @@
 # playground
 
+## 1.0.1
+
+### Patch Changes
+
+- Updated dependencies
+  - @better-conversation/core@1.0.1
+  - @better-conversation/adapter-drizzle@1.0.1
+  - @better-conversation/handler-next@1.0.1
+  - @better-conversation/client@1.0.1
+  - @better-conversation/react@1.0.1
+  - @better-conversation/plugin-presence@1.0.1
+  - @better-conversation/plugin-sse@1.0.1
+  - @better-conversation/plugin-history@1.0.1
+  - @better-conversation/plugin-rate-limit@1.0.1
+
 ## 1.0.0
 
 ### Major Changes

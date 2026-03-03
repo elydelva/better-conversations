@@ -1,6 +1,7 @@
 {
   "name": "@better-conversation/conformance",
   "version": "1.0.0",
+  "private": true,
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -23,5 +24,7 @@
     "bun-types": "^1.2.0",
     "typescript": "catalog:"
   },
-  "files": ["dist"]
+  "files": [
+    "dist"
+  ]
 }

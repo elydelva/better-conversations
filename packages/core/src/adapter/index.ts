@@ -1,7 +1,6 @@
-export { createAdapterHelpers } from "./helpers.js";
+export { createAdapterHelpers, type AdapterOptions } from "./helpers.js";
 export { createUnsupportedPolicyAdapter } from "./unsupportedPolicies.js";
 export { createUnsupportedRegistriesAdapter } from "./unsupportedRegistries.js";
-export type { AdapterOptions } from "./helpers.js";
 export type { ChatterAdapter, ChatterListParams } from "./ChatterAdapter.interface.js";
 export type { ConversationAdapter } from "./ConversationAdapter.interface.js";
 export type { ParticipantAdapter } from "./ParticipantAdapter.interface.js";
